@@ -89,6 +89,17 @@ Mêmes libellés pour tous les types, une ligne sans objet est supprimée (pas d
 
 ### 3.1 JDS
 
+**Tarif : case à cocher.** La ligne `Tarif :` n'est plus tapée à la main : on coche un choix et l'outil l'écrit.
+
+| Choix | Ligne écrite |
+|---|---|
+| Formule | `Tarif : formule avec alcool 18 €, sans alcool 16 €` |
+| Tarifs habituels | `Tarif : tarifs et fonctionnement habituels du bar` |
+| Autre, avec un champ de texte | `Tarif : <texte saisi>` |
+
+Le choix est **obligatoire** (sans choix par défaut) pour Soirée BOTC, Tables Ouvertes et Soirée Découverte, et
+**facultatif** pour Évènement externe et sans catégorie (rien de coché = pas de ligne `Tarif :`).
+
 **Soirée BOTC** (`colorId` 3)
 
 - Titre : `Blood on the Clocktower - Débutant·es` ou `Blood on the Clocktower - Intermédiaire` (le niveau est
@@ -128,7 +139,7 @@ Places : <nombre>, inscription obligatoire
 Tarif : tarifs et fonctionnement habituels du bar
 ```
 
-Si la soirée a un tarif particulier, il remplace la ligne habituelle, ex. pour Mystères à Bréval :
+Si la soirée a un tarif particulier, on coche « Autre », ex. pour Mystères à Bréval :
 `Tarif : 5 € + 1 consommation à l'arrivée, puis 1 consommation toutes les 2h (nourriture obligatoire avec de l'alcool)`.
 
 ### 3.2 JDR
@@ -138,17 +149,19 @@ Pas de préfixe `JDR - ` : le site distingue déjà les deux calendriers (filtre
 **Réservation Client** (`colorId` 2)
 
 - Titre : `Réservation Client`
-- Description publique : **aucune** (le titre suffit).
+- Description publique : toujours la même phrase, `📌 Cette session est réservée par un client.`
 - Interne : `Contact : Tristan (Discord)`, puis `Notes :` si besoin (ex. `tous les 2e mercredis du mois`).
 
 **Créneau Libre** (`colorId` 3)
 
 - Titre : `Créneau Libre`
-- On garde le bouton « Demander à réserver la salle » : plus de `Inscription : aucune` ni de « n'utilisez pas le
-  système de réservation ».
+- On garde le bouton « Demander à réserver la salle » (il ouvre Discord, Instagram ou le mail) : plus de
+  `Inscription : aucune`. La description précise de ne pas passer par le système de réservation classique.
 
 ```
-Réservez la salle pour votre table de jeu de rôle !
+Ce créneau est ouvert à la réservation pour votre table de jeu de rôle !
+
+⚠️ Ne passez pas par le système de réservation classique du bar : envoyez-nous un message sur Discord, Instagram ou par mail.
 
 Tarif : consommation minimum de 90 € par table
 ```
@@ -251,6 +264,7 @@ Rien n'est encore fait. Pistes possibles une fois la charte validée :
 2. Refuser l'enregistrement tant qu'un repère « [à compléter] » reste dans la description publique.
 3. Retirer le champ Instagram, et ne plus proposer « Pas d'inscription » quand la catégorie n'a pas de bouton.
 4. Ajouter la catégorie « Évènement externe ».
+5. Case Tarif pour les évènements JDS : Formule, Tarifs habituels ou Autre (champ de texte).
 
 ## 5. Corriger les évènements existants (à décider ensuite)
 
@@ -264,7 +278,6 @@ Réécrire les évènements à venir au nouveau format dans Google Agenda, caté
 - « Pour vous inscrire : Discord / Instagram / mail » dans tous les OS & Initiation et Vadrouilles & Magie.
 - Lignes `Instagram :` et `Discord :` (salon du bar) dans les JDS d'octobre.
 - `Inscription : aucune` sur des catégories sans bouton (Réservation Client, Campagne, Ligue, sans catégorie).
-- « 📌 Cette session est réservée par un client » qui répète le titre.
 
 **Incohérences**
 - Places écrites de 5 façons différentes, et parfois en contradiction avec la partie interne (16 en public, 8 + 8 en interne).
