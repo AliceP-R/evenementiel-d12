@@ -1,1 +1,53 @@
 # evenementiel-d12
+
+Outil d'administration des évènements d'**Au Dé 12**. L'équipe crée, modifie, duplique et supprime les évènements
+JDS et JDR avec un vrai formulaire, et l'outil les écrit dans Google Agenda en respectant les conventions lues par le
+site public [calendrier.au-de12paris.com](https://calendrier.au-de12paris.com) (dépôt `alicep-r/calendrier-d12`).
+
+📄 Spécifications : [docs/specs.md](docs/specs.md)
+
+## Contenu
+
+| Fichier | Rôle |
+|---|---|
+| `apps-script/Code.gs` | Fonctions serveur : lecture, écriture et suppression dans Google Agenda, contrôle d'accès, journal |
+| `apps-script/Conventions.gs` | Traduction formulaire ↔ conventions Google Agenda (description, horaires, répétition) |
+| `apps-script/Categories.gs` | Catégories = couleurs Google Agenda (identiques à `COULEURS` du site public) |
+| `apps-script/Index.html`, `Style.html`, `Script.html` | Interface (HTML, CSS et JS vanilla, sans build) |
+| `apps-script/appsscript.json` | Manifeste : fuseau, service avancé Calendar, accès réservé au domaine |
+| `tests/` | Tests des conventions : `node --test tests/*.test.js` (Node 18 ou plus, aucune dépendance) |
+
+## Mise en service (une seule fois)
+
+À faire avec un compte `@au-de12paris.com` qui peut **modifier les deux agendas** JDS et JDR :
+
+1. Sur [script.google.com](https://script.google.com) : **Nouveau projet**, nommé par exemple « Au Dé 12 · Admin évènements ».
+   C'est un projet **séparé** de celui du site public.
+2. **Paramètres du projet** (⚙️) : cocher « Afficher le fichier manifeste appsscript.json ».
+3. Recréer chaque fichier du dossier `apps-script/` avec **le même nom** et y coller son contenu :
+   - fichiers script (`+` → Script) : `Code`, `Conventions`, `Categories` ;
+   - fichiers HTML (`+` → HTML) : `Index`, `Style`, `Script` ;
+   - remplacer le contenu de `appsscript.json`.
+4. **Paramètres du projet** → **Propriétés du script** → ajouter `EMAILS_AUTORISES` avec les deux adresses,
+   séparées par une virgule (ex. `alice@au-de12paris.com,camille@au-de12paris.com`).
+5. **Déployer** → **Nouveau déploiement** → type **Application Web** :
+   - Exécuter en tant que : **Moi** ;
+   - Qui a accès : **Tous les utilisateurs de au-de12paris.com**.
+   
+   Autoriser l'accès à Google Agenda et à Google Sheets quand Google le demande.
+6. Ouvrir l'URL de l'application web (à garder en favori). Le journal (Google Sheet) se crée au premier enregistrement,
+   dans le Drive du compte qui a déployé. Le partager avec l'équipe si besoin.
+
+### Mettre à jour après une modification du code
+
+Recoller les fichiers modifiés, puis **Déployer** → **Gérer les déploiements** → ✏️ → Version : **Nouvelle version** →
+Déployer. L'URL ne change pas.
+
+## Bon à savoir
+
+- Le site public n'est pas modifié : il continue de lire Google Agenda comme avant.
+- On peut toujours modifier un évènement directement dans Google Agenda : l'outil relit les conventions
+  (`---interne---`, `Inscription :`, etc.) à l'ouverture du formulaire.
+- Les catégories sont listées dans `Categories.gs` **et** dans `COULEURS` de `docs/index.html` du site public :
+  en cas de changement, modifier les deux.
+- Flux iCal : chaque agenda Google en fournit un (Paramètres de l'agenda → « Adresse publique au format iCal »).

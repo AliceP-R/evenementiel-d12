@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <?!= inclure('Style') ?>
+</head>
+<body>
+  <header class="entete">
+    <h1>🎲 Au Dé 12 · Évènements</h1>
+    <div class="entete-droite">
+      <span id="utilisateur" class="discret"></span>
+      <button type="button" class="btn btn-lien" id="btn-journal">📜 Journal</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="barre">
+      <div class="nav-mois">
+        <button type="button" class="btn" id="mois-precedent" aria-label="Mois précédent">‹</button>
+        <h2 id="titre-mois"></h2>
+        <button type="button" class="btn" id="mois-suivant" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="filtres" role="group" aria-label="Calendrier affiché">
+        <button type="button" class="btn filtre actif" data-filtre="tous">Tous</button>
+        <button type="button" class="btn filtre" data-filtre="jds">🎯 Jeux de société</button>
+        <button type="button" class="btn filtre" data-filtre="jdr">⚔️ Jeux de rôle</button>
+      </div>
+      <button type="button" class="btn btn-plein" id="btn-nouveau">➕ Nouvel évènement</button>
+    </div>
+
+    <p id="statut" class="statut" role="status"></p>
+    <div id="liste"></div>
+  </main>
+
+  <!-- Formulaire de création / modification -->
+  <dialog id="dlg-form" aria-labelledby="form-titre">
+    <form id="form" novalidate>
+      <h2 id="form-titre">Nouvel évènement</h2>
+      <p id="form-portee" class="encart" hidden></p>
+
+      <div class="grille">
+        <label>Calendrier
+          <select name="calendrier" required>
+            <option value="jds">🎯 Jeux de société</option>
+            <option value="jdr">⚔️ Jeux de rôle</option>
+          </select>
+        </label>
+        <label>Catégorie
+          <select name="colorId"></select>
+          <small id="aide-categorie" class="discret"></small>
+        </label>
+      </div>
+
+      <label>Titre<input name="titre" required maxlength="200"></label>
+
+      <div class="grille">
+        <label>Date<input type="date" name="date" required></label>
+        <label class="case"><input type="checkbox" name="journeeEntiere"> Journée entière</label>
+      </div>
+      <p id="alerte-mardi" class="encart" hidden>⚠️ C'est un mardi : le bar est fermé ce jour-là.</p>
+      <div class="grille" id="bloc-heures">
+        <label>Début<input type="time" name="heureDebut" step="300"></label>
+        <label>Fin<input type="time" name="heureFin" step="300">
+          <small class="discret">Plus tôt que le début = le lendemain (après minuit)</small>
+        </label>
+      </div>
+      <div class="grille" id="bloc-date-fin" hidden>
+        <label>Dernier jour<input type="date" name="dateFin"></label>
+      </div>
+
+      <div class="grille">
+        <label>Lieu<input name="lieu"></label>
+        <label>Visibilité
+          <select name="visibilite">
+            <option value="publique">🌍 Public : affiché sur le site</option>
+            <option value="privee">🔒 Privé : réservé à l'équipe</option>
+          </select>
+        </label>
+      </div>
+
+      <label>Description publique
+        <textarea name="descriptionPublique" rows="5" placeholder="Visible par tout le monde sur le site. Les liens https://… deviennent cliquables."></textarea>
+      </label>
+
+      <fieldset>
+        <legend>Inscription sur le site</legend>
+        <label class="case"><input type="radio" name="inscriptionMode" value="normal" checked> <span id="libelle-normal">Bouton habituel de la catégorie</span></label>
+        <label class="case"><input type="radio" name="inscriptionMode" value="externe"> Lien d'inscription externe (site de l'organisateur)</label>
+        <input name="inscriptionUrl" type="url" placeholder="https://…" hidden>
+        <label class="case"><input type="radio" name="inscriptionMode" value="aucune"> Pas d'inscription (aucun bouton)</label>
+      </fieldset>
+
+      <details id="bloc-canaux">
+        <summary>Liens propres à cet évènement (Vibes, Meetup, Discord, Instagram)</summary>
+        <p class="discret">Facultatif : remplace le lien habituel du bar dans les boutons de demande d'inscription.</p>
+        <div class="grille">
+          <label>Vibes<input name="canal-vibes" type="url" placeholder="https://…"></label>
+          <label>Meetup<input name="canal-meetup" type="url" placeholder="https://…"></label>
+          <label>Discord<input name="canal-discord" type="url" placeholder="https://…"></label>
+          <label>Instagram<input name="canal-instagram" type="url" placeholder="https://…"></label>
+        </div>
+      </details>
+
+      <fieldset id="bloc-recurrence">
+        <legend>Répétition</legend>
+        <div class="grille">
+          <label>Fréquence
+            <select name="frequence">
+              <option value="aucune">Une seule fois</option>
+              <option value="hebdo">Chaque semaine</option>
+              <option value="bihebdo">Toutes les 2 semaines</option>
+              <option value="autre" hidden>Règle définie dans Google Agenda (conservée)</option>
+            </select>
+          </label>
+          <label id="bloc-fin-serie">Jusqu'au (facultatif)<input type="date" name="finSerie"></label>
+        </div>
+      </fieldset>
+
+      <label class="interne">🔐 Notes internes : jamais visibles sur le site
+        <textarea name="notesInternes" rows="3"></textarea>
+      </label>
+
+      <p id="form-erreur" class="erreur" role="alert" hidden></p>
+
+      <div class="actions">
+        <button type="button" class="btn" id="btn-annuler">Annuler</button>
+        <button type="submit" class="btn btn-plein" id="btn-enregistrer">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Choix : cette date ou toute la série -->
+  <dialog id="dlg-portee" aria-labelledby="portee-titre">
+    <h2 id="portee-titre">Évènement répété</h2>
+    <p id="portee-texte"></p>
+    <div class="actions">
+      <button type="button" class="btn" data-portee="annuler">Annuler</button>
+      <button type="button" class="btn" data-portee="serie">Toute la série</button>
+      <button type="button" class="btn btn-plein" data-portee="occurrence">Cette date seulement</button>
+    </div>
+  </dialog>
+
+  <!-- Confirmation de suppression -->
+  <dialog id="dlg-suppr" aria-labelledby="suppr-titre">
+    <h2 id="suppr-titre">Supprimer ?</h2>
+    <p id="suppr-texte"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="suppr-annuler">Annuler</button>
+      <button type="button" class="btn btn-danger" id="suppr-ok">Supprimer</button>
+    </div>
+  </dialog>
+
+  <?!= inclure('Script') ?>
+</body>
+</html>

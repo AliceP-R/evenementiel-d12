@@ -1,0 +1,345 @@
+<script>
+  // ---------- État ----------
+  const etat = {
+    annee: new Date().getFullYear(),
+    mois: new Date().getMonth(), // 0 = janvier
+    filtre: 'tous',
+    categories: { jds: [], jdr: [] },
+    lieuParDefaut: '',
+    evenements: [],
+    enCours: null,      // évènement ouvert dans le formulaire
+    portee: null        // 'occurrence' | 'serie' | null
+  };
+
+  const $ = sel => document.querySelector(sel);
+  const form = $('#form');
+
+  // Appel d'une fonction serveur sous forme de promesse
+  function appel(nom, ...args) {
+    return new Promise((ok, ko) => {
+      google.script.run.withSuccessHandler(ok).withFailureHandler(ko)[nom](...args);
+    });
+  }
+
+  // Petit constructeur d'éléments (textContent : aucun HTML injecté)
+  function el(tag, attrs, ...enfants) {
+    const n = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => {
+      if (k === 'class') n.className = v;
+      else if (k === 'style') n.style.cssText = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v);
+    });
+    enfants.flat().forEach(e => { if (e != null && e !== false) n.append(e); });
+    return n;
+  }
+
+  // ---------- Dates ----------
+  const pad = n => String(n).padStart(2, '0');
+  const dateStr = (a, m, j) => `${a}-${pad(m + 1)}-${pad(j)}`;
+  const versDate = s => { const [a, m, j] = s.split('-').map(Number); return new Date(a, m - 1, j); };
+  const aujourdhui = () => { const d = new Date(); return dateStr(d.getFullYear(), d.getMonth(), d.getDate()); };
+  const heureFr = h => h ? h.replace(':', 'h') : '';
+  const jourLong = s => versDate(s).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // ---------- Chargement ----------
+  function chargerMois() {
+    const debut = dateStr(etat.annee, etat.mois, 1);
+    const suivant = new Date(etat.annee, etat.mois + 1, 1);
+    const fin = dateStr(suivant.getFullYear(), suivant.getMonth(), 1);
+    $('#titre-mois').textContent = new Date(etat.annee, etat.mois, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    $('#statut').textContent = 'Chargement…';
+    $('#statut').classList.remove('erreur');
+    return appel('chargerDonnees', debut, fin).then(d => {
+      etat.categories = d.categories;
+      etat.lieuParDefaut = d.lieuParDefaut;
+      etat.evenements = d.evenements;
+      $('#utilisateur').textContent = d.utilisateur;
+      $('#statut').textContent = '';
+      afficherListe();
+    }).catch(e => {
+      $('#statut').textContent = '❌ ' + e.message;
+      $('#statut').classList.add('erreur');
+    });
+  }
+
+  function categorieDe(ev) {
+    return (etat.categories[ev.calendrier] || []).find(c => c.colorId === ev.colorId);
+  }
+
+  // ---------- Liste ----------
+  function afficherListe() {
+    const liste = $('#liste');
+    liste.textContent = '';
+    const evts = etat.evenements
+      .filter(e => etat.filtre === 'tous' || e.calendrier === etat.filtre)
+      .sort((a, b) => (a.date + (a.heureDebut || '')).localeCompare(b.date + (b.heureDebut || '')));
+
+    if (!evts.length) {
+      liste.append(el('p', { class: 'vide' }, 'Aucun évènement ce mois-ci.'));
+      return;
+    }
+    const parJour = {};
+    evts.forEach(e => (parJour[e.date] = parJour[e.date] || []).push(e));
+    const ajd = aujourdhui();
+    Object.keys(parJour).sort().forEach(jour => {
+      liste.append(el('section', { class: 'jour' + (jour === ajd ? ' aujourdhui' : '') },
+        el('h3', {}, jourLong(jour) + (jour === ajd ? ' · aujourd\'hui' : '')),
+        parJour[jour].map(e => carte(e, jour < ajd))
+      ));
+    });
+  }
+
+  function carte(ev, passe) {
+    const cat = categorieDe(ev);
+    const horaire = ev.journeeEntiere
+      ? (ev.dateFin && ev.dateFin !== ev.date ? `Jusqu'au ${versDate(ev.dateFin).toLocaleDateString('fr-FR')}` : 'Journée')
+      : `${heureFr(ev.heureDebut)} – ${heureFr(ev.heureFin)}`;
+    return el('article', { class: 'evt' + (passe ? ' passe' : ''), style: `border-left-color: ${cat ? cat.teinte : 'var(--texte-doux)'}` },
+      el('div', { class: 'evt-heure' }, horaire),
+      el('div', { class: 'evt-corps' },
+        el('div', { class: 'evt-titre' }, ev.titre || '(sans titre)'),
+        el('div', { class: 'badges' },
+          el('span', { class: 'badge' }, ev.calendrier === 'jds' ? '🎯 JDS' : '⚔️ JDR'),
+          el('span', { class: 'badge' }, cat ? cat.nom : 'Sans catégorie'),
+          ev.visibilite === 'privee' && el('span', { class: 'badge' }, '🔒 Privé'),
+          ev.serieId && el('span', { class: 'badge' }, '🔁 Série'),
+          ev.inscription.mode === 'externe' && el('span', { class: 'badge' }, '🔗 Inscription externe'),
+          ev.inscription.mode === 'aucune' && el('span', { class: 'badge' }, '🚫 Pas d\'inscription'),
+          ev.notesInternes && el('span', { class: 'badge', title: ev.notesInternes }, '🔐 Notes internes')
+        )
+      ),
+      el('div', { class: 'evt-actions' },
+        el('button', { type: 'button', class: 'btn btn-petit', onclick: () => modifier(ev) }, '✏️ Modifier'),
+        el('button', { type: 'button', class: 'btn btn-petit', onclick: () => dupliquer(ev) }, '📄 Dupliquer'),
+        el('button', { type: 'button', class: 'btn btn-petit', onclick: () => supprimer(ev) }, '🗑️ Supprimer')
+      )
+    );
+  }
+
+  // ---------- Formulaire ----------
+  function remplirCategories(calendrier, colorId) {
+    const select = form.colorId;
+    select.textContent = '';
+    select.append(el('option', { value: '' }, 'Sans catégorie'));
+    (etat.categories[calendrier] || []).forEach(c => select.append(el('option', { value: c.colorId }, c.nom)));
+    select.value = colorId || '';
+    majAideCategorie();
+  }
+
+  function majAideCategorie() {
+    const cal = form.calendrier.value;
+    const cat = (etat.categories[cal] || []).find(c => c.colorId === form.colorId.value);
+    const boutons = { inscription: '« ✋ Demander à m\'inscrire »', reservation: '« 🔑 Demander à réserver la salle »' };
+    const salles = { bloque: 'bloque la salle', libre: 'salle réservable', ligue: 'priorité Ligue Ludique' };
+    let aide = cat && cat.bouton ? 'Bouton ' + boutons[cat.bouton] : 'Pas de bouton sur le site';
+    if (cal === 'jdr') aide += ' · ' + (cat ? salles[cat.salle] : 'bloque la salle');
+    $('#aide-categorie').textContent = aide;
+    $('#libelle-normal').textContent = cat && cat.bouton
+      ? 'Bouton habituel : ' + boutons[cat.bouton]
+      : 'Comportement habituel de la catégorie (ici : aucun bouton)';
+  }
+
+  function majVisibiliteChamps() {
+    const entiere = form.journeeEntiere.checked;
+    $('#bloc-heures').hidden = entiere;
+    $('#bloc-date-fin').hidden = !entiere;
+    const modeInscription = form.querySelector('[name=inscriptionMode]:checked').value;
+    form.inscriptionUrl.hidden = modeInscription !== 'externe';
+    $('#bloc-canaux').hidden = modeInscription !== 'normal'; // liens utilisés seulement par le bouton habituel
+    $('#alerte-mardi').hidden = !form.date.value || versDate(form.date.value).getDay() !== 2;
+    const freq = form.frequence.value;
+    $('#bloc-fin-serie').hidden = freq === 'aucune' || freq === 'autre';
+  }
+
+  // Ouvre le formulaire. ev = valeurs de départ (évènement existant, copie ou nouveau)
+  function ouvrirFormulaire(ev, titre, encart) {
+    etat.enCours = ev;
+    form.reset();
+    $('#form-titre').textContent = titre;
+    $('#form-portee').hidden = !encart;
+    $('#form-portee').textContent = encart || '';
+    $('#form-erreur').hidden = true;
+
+    form.calendrier.value = ev.calendrier;
+    form.calendrier.disabled = !!ev.id; // pour changer de calendrier : dupliquer puis supprimer
+    remplirCategories(ev.calendrier, ev.colorId);
+    form.titre.value = ev.titre || '';
+    form.date.value = ev.date || '';
+    form.journeeEntiere.checked = !!ev.journeeEntiere;
+    form.heureDebut.value = ev.heureDebut || '19:00';
+    form.heureFin.value = ev.heureFin || '23:00';
+    form.dateFin.value = ev.dateFin || '';
+    form.lieu.value = ev.lieu != null ? ev.lieu : etat.lieuParDefaut;
+    form.visibilite.value = ev.visibilite || 'publique';
+    form.descriptionPublique.value = ev.descriptionPublique || '';
+    form.notesInternes.value = ev.notesInternes || '';
+    const insc = ev.inscription || { mode: 'normal', url: '' };
+    form.querySelector(`[name=inscriptionMode][value=${insc.mode}]`).checked = true;
+    form.inscriptionUrl.value = insc.url || '';
+    const canaux = ev.canaux || {};
+    ['vibes', 'meetup', 'discord', 'instagram'].forEach(c => { form['canal-' + c].value = canaux[c] || ''; });
+    $('#bloc-canaux').open = Object.values(canaux).some(Boolean);
+
+    // Répétition : seulement à la création ou pour toute la série
+    const rec = ev.recurrence || { frequence: 'aucune', fin: '' };
+    $('#bloc-recurrence').hidden = etat.portee === 'occurrence';
+    form.querySelector('[name=frequence] option[value=autre]').hidden = rec.frequence !== 'autre';
+    form.frequence.value = rec.frequence;
+    form.finSerie.value = rec.fin || '';
+
+    majVisibiliteChamps();
+    $('#dlg-form').showModal();
+    form.titre.focus();
+  }
+
+  function lireFormulaire() {
+    const ev = etat.enCours;
+    return {
+      id: ev.id || '',
+      calendrier: form.calendrier.value,
+      colorId: form.colorId.value,
+      titre: form.titre.value,
+      date: form.date.value,
+      journeeEntiere: form.journeeEntiere.checked,
+      heureDebut: form.heureDebut.value,
+      heureFin: form.heureFin.value,
+      dateFin: form.dateFin.value,
+      lieu: form.lieu.value,
+      visibilite: form.visibilite.value,
+      descriptionPublique: form.descriptionPublique.value,
+      notesInternes: form.notesInternes.value,
+      inscription: {
+        mode: form.querySelector('[name=inscriptionMode]:checked').value,
+        url: form.inscriptionUrl.value
+      },
+      canaux: {
+        vibes: form['canal-vibes'].value,
+        meetup: form['canal-meetup'].value,
+        discord: form['canal-discord'].value,
+        instagram: form['canal-instagram'].value
+      },
+      recurrence: { frequence: form.frequence.value, fin: form.finSerie.value }
+    };
+  }
+
+  function enregistrer(e) {
+    e.preventDefault();
+    const bouton = $('#btn-enregistrer');
+    bouton.disabled = true;
+    bouton.textContent = 'Enregistrement…';
+    $('#form-erreur').hidden = true;
+    appel('enregistrerEvenement', lireFormulaire())
+      .then(() => {
+        $('#dlg-form').close();
+        return chargerMois().then(() => { $('#statut').textContent = '✅ Enregistré dans Google Agenda.'; });
+      })
+      .catch(err => {
+        $('#form-erreur').textContent = err.message;
+        $('#form-erreur').hidden = false;
+      })
+      .finally(() => {
+        bouton.disabled = false;
+        bouton.textContent = 'Enregistrer';
+      });
+  }
+
+  // ---------- Actions ----------
+  function nouveau() {
+    etat.portee = null;
+    const ajd = aujourdhui();
+    const premier = dateStr(etat.annee, etat.mois, 1);
+    const date = ajd.slice(0, 7) === premier.slice(0, 7) ? ajd : premier;
+    ouvrirFormulaire({ calendrier: etat.filtre === 'jdr' ? 'jdr' : 'jds', date }, 'Nouvel évènement');
+  }
+
+  function dupliquer(ev) {
+    etat.portee = null;
+    const copie = Object.assign({}, ev, { id: '', serieId: '', recurrence: { frequence: 'aucune', fin: '' } });
+    ouvrirFormulaire(copie, 'Dupliquer l\'évènement', 'Copie de « ' + ev.titre + ' » : change la date puis enregistre.');
+  }
+
+  function modifier(ev) {
+    if (!ev.serieId) {
+      etat.portee = null;
+      ouvrirFormulaire(ev, 'Modifier l\'évènement');
+      return;
+    }
+    demanderPortee(ev, 'Modifier').then(portee => {
+      etat.portee = portee;
+      if (portee === 'occurrence') {
+        ouvrirFormulaire(ev, 'Modifier cette date', 'Tu modifies uniquement le ' + jourLong(ev.date) + '. Le reste de la série ne change pas.');
+      } else if (portee === 'serie') {
+        $('#statut').textContent = 'Chargement de la série…';
+        appel('lireEvenement', ev.calendrier, ev.serieId).then(serie => {
+          $('#statut').textContent = '';
+          ouvrirFormulaire(serie, 'Modifier toute la série',
+            'Tu modifies toute la série (elle commence le ' + jourLong(serie.date) + '). Les dates déjà modifiées une par une gardent leurs changements.');
+        }).catch(e => { $('#statut').textContent = '❌ ' + e.message; });
+      }
+    });
+  }
+
+  function supprimer(ev) {
+    const choix = ev.serieId ? demanderPortee(ev, 'Supprimer') : Promise.resolve('occurrence');
+    choix.then(portee => {
+      if (portee !== 'occurrence' && portee !== 'serie') return;
+      const quoi = portee === 'serie' ? 'toute la série « ' + ev.titre + ' »' : '« ' + ev.titre + ' » du ' + jourLong(ev.date);
+      $('#suppr-texte').textContent = 'Supprimer ' + quoi + ' de Google Agenda ?';
+      const dlg = $('#dlg-suppr');
+      $('#suppr-ok').onclick = () => {
+        $('#suppr-ok').disabled = true;
+        appel('supprimerEvenement', ev.calendrier, ev.id, portee)
+          .then(() => { dlg.close(); return chargerMois(); })
+          .then(() => { $('#statut').textContent = '🗑️ Supprimé.'; })
+          .catch(e => { dlg.close(); $('#statut').textContent = '❌ ' + e.message; })
+          .finally(() => { $('#suppr-ok').disabled = false; });
+      };
+      dlg.showModal();
+    });
+  }
+
+  // Évènement répété : « cette date seulement » ou « toute la série »
+  function demanderPortee(ev, verbe) {
+    return new Promise(resolve => {
+      const dlg = $('#dlg-portee');
+      $('#portee-titre').textContent = verbe + ' un évènement répété';
+      $('#portee-texte').textContent = '« ' + ev.titre + ' » du ' + jourLong(ev.date) + ' fait partie d\'une série.';
+      dlg.querySelectorAll('[data-portee]').forEach(b => {
+        b.onclick = () => { dlg.close(); resolve(b.dataset.portee); };
+      });
+      dlg.oncancel = () => resolve('annuler');
+      dlg.showModal();
+    });
+  }
+
+  // ---------- Branchements ----------
+  $('#mois-precedent').addEventListener('click', () => {
+    if (--etat.mois < 0) { etat.mois = 11; etat.annee--; }
+    chargerMois();
+  });
+  $('#mois-suivant').addEventListener('click', () => {
+    if (++etat.mois > 11) { etat.mois = 0; etat.annee++; }
+    chargerMois();
+  });
+  document.querySelectorAll('.filtre').forEach(b => b.addEventListener('click', () => {
+    etat.filtre = b.dataset.filtre;
+    document.querySelectorAll('.filtre').forEach(x => x.classList.toggle('actif', x === b));
+    afficherListe();
+  }));
+  $('#btn-nouveau').addEventListener('click', nouveau);
+  $('#btn-journal').addEventListener('click', () => {
+    // Fenêtre ouverte tout de suite (sinon bloquée par le navigateur), adresse ajoutée ensuite
+    const fenetre = window.open('', '_blank');
+    appel('lienJournal').then(url => { if (fenetre) fenetre.location = url; else window.open(url, '_blank'); })
+      .catch(e => { if (fenetre) fenetre.close(); $('#statut').textContent = '❌ ' + e.message; });
+  });
+  $('#btn-annuler').addEventListener('click', () => $('#dlg-form').close());
+  $('#suppr-annuler').addEventListener('click', () => $('#dlg-suppr').close());
+  form.addEventListener('submit', enregistrer);
+  form.calendrier.addEventListener('change', () => remplirCategories(form.calendrier.value, ''));
+  form.colorId.addEventListener('change', majAideCategorie);
+  form.addEventListener('change', majVisibiliteChamps);
+
+  chargerMois();
+</script>
