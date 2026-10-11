@@ -63,7 +63,6 @@ de **vrais champs**. L'outil écrit lui-même les conventions dans Google Agenda
 | Titre | `summary` |
 | Date, début, fin | `start` / `end` en heure de Paris. **Une fin plus tôt que le début signifie le lendemain** (fin de service après minuit). |
 | Journée entière + dernier jour | `start.date` / `end.date` (le jour de fin est exclu côté Google, l'outil gère le décalage) |
-| Lieu | `location`, « Au Dé 12 » par défaut |
 | Visibilité | Public = `default`, Privé = `private` (masqué par le site public) |
 | Description publique | Début de la description |
 | Inscription | « Bouton habituel » : aucune ligne. « Lien externe » : ligne `Inscription : <lien>`. « Pas d'inscription » : ligne `Inscription : aucune`. |

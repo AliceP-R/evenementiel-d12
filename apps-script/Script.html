@@ -5,7 +5,6 @@
     mois: new Date().getMonth(), // 0 = janvier
     filtre: 'tous',
     categories: { jds: [], jdr: [] },
-    lieuParDefaut: '',
     evenements: [],
     enCours: null,      // évènement ouvert dans le formulaire
     portee: null        // 'occurrence' | 'serie' | null
@@ -52,7 +51,6 @@
     $('#statut').classList.remove('erreur');
     return appel('chargerDonnees', debut, fin).then(d => {
       etat.categories = d.categories;
-      etat.lieuParDefaut = d.lieuParDefaut;
       etat.evenements = d.evenements;
       $('#utilisateur').textContent = d.utilisateur;
       $('#statut').textContent = '';
@@ -170,7 +168,6 @@
     form.heureDebut.value = ev.heureDebut || '19:00';
     form.heureFin.value = ev.heureFin || '23:00';
     form.dateFin.value = ev.dateFin || '';
-    form.lieu.value = ev.lieu != null ? ev.lieu : etat.lieuParDefaut;
     form.visibilite.value = ev.visibilite || 'publique';
     form.descriptionPublique.value = ev.descriptionPublique || '';
     form.notesInternes.value = ev.notesInternes || '';
@@ -205,7 +202,6 @@
       heureDebut: form.heureDebut.value,
       heureFin: form.heureFin.value,
       dateFin: form.dateFin.value,
-      lieu: form.lieu.value,
       visibilite: form.visibilite.value,
       descriptionPublique: form.descriptionPublique.value,
       notesInternes: form.notesInternes.value,

@@ -14,7 +14,6 @@ const CALENDRIERS = {
   jdr: { id: 'gestionjdr@au-de12paris.com', nom: 'Jeux de rôle' }
 };
 const FUSEAU = 'Europe/Paris';
-const LIEU_PAR_DEFAUT = 'Au Dé 12';
 
 // ---------- Page ----------
 
@@ -73,7 +72,7 @@ function chargerDonnees(debut, fin) {
       pageToken = reponse.nextPageToken;
     } while (pageToken);
   });
-  return { utilisateur: email, categories: CATEGORIES, lieuParDefaut: LIEU_PAR_DEFAUT, evenements };
+  return { utilisateur: email, categories: CATEGORIES, evenements };
 }
 
 // Un évènement (ou le modèle d'une série) pour le formulaire
@@ -92,7 +91,6 @@ function versVue_(type, ev) {
     id: ev.id,
     serieId: ev.recurringEventId || '',
     titre: ev.summary || '',
-    lieu: ev.location || '',
     colorId: ev.colorId ? String(ev.colorId) : '',
     visibilite: visibilite === 'private' || visibilite === 'confidential' ? 'privee' : 'publique',
     recurrence: lireRecurrence(ev.recurrence),
@@ -115,7 +113,6 @@ function enregistrerEvenement(f) {
   const occurrence = !!ressource.recurringEventId;
 
   ressource.summary = f.titre.trim();
-  ressource.location = (f.lieu || '').trim();
   ressource.description = construireDescription(f);
   ressource.visibility = f.visibilite === 'privee' ? 'private' : 'default';
   if (f.colorId) ressource.colorId = String(f.colorId);
