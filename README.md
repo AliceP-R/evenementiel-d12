@@ -7,7 +7,7 @@ site public [calendrier.au-de12paris.com](https://calendrier.au-de12paris.com) (
 🔗 **Ouvrir l'outil** (comptes `@au-de12paris.com` autorisés uniquement) :
 https://script.google.com/a/macros/au-de12paris.com/s/AKfycbze5U_fOGKcIdlryhaDd8DuwZVP1hbws4DZSkmc9dxZT1Zs5nqLDRWBL1Qkw2yCds_yMA/exec
 
-📄 Spécifications : [docs/specs.md](docs/specs.md)
+📄 Spécifications : [docs/specs.md](docs/specs.md) · Format des descriptions (proposition) : [docs/formats-descriptions.md](docs/formats-descriptions.md)
 
 ## Contenu
 
