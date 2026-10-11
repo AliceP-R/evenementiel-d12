@@ -42,6 +42,9 @@ Notes : …
 
 ### 2.1 Lignes publiques
 
+Dans les modèles, `<nombre>` est à remplacer à chaque évènement : seules les Tables Ouvertes (15) et les soirées BOTC
+(12) ont une jauge habituelle.
+
 Les lignes sont toujours dans cet ordre, avec ces libellés exacts. Une ligne sans objet est supprimée, jamais laissée vide.
 
 | Libellé | Contenu | Exemples |
@@ -78,7 +81,7 @@ Mêmes libellés pour tous les types, une ligne sans objet est supprimée (pas d
 
 - Prix avec une espace : `18 €`, `90 €`.
 - Écriture inclusive au point médian : `chacun·e`, `joueur·ses`, `auteur·ices`, `débutant·es`.
-- Tiret simple entouré d'espaces dans les titres : `JDR - Initiation D&D`.
+- Tiret simple entouré d'espaces dans les titres : `Blood on the Clocktower - Débutant·es`.
 - Pas de MAJUSCULES pour un mot entier, pas de « ! » en fin de titre.
 - Jamais de texte d'attente du type « [Texte de présentation] » ou « (X places) » dans la partie publique.
 
@@ -121,7 +124,7 @@ Pour la S.A.D, on ajoute en tête : `Passez une soirée jeux & puzzles en bonne 
 <Présentation du jeu en 2 ou 3 phrases>
 
 Animé par : les auteurs du jeu
-Places : 12, inscription obligatoire
+Places : <nombre>, inscription obligatoire
 Tarif : tarifs et fonctionnement habituels du bar
 ```
 
@@ -130,17 +133,17 @@ Si la soirée a un tarif particulier, il remplace la ligne habituelle, ex. pour 
 
 ### 3.2 JDR
 
-Tous les titres JDR commencent par `JDR - `, comme aujourd'hui.
+Pas de préfixe `JDR - ` : le site distingue déjà les deux calendriers (filtre, couleurs, compteurs).
 
 **Réservation Client** (`colorId` 2)
 
-- Titre : `JDR - Réservation Client`
+- Titre : `Réservation Client`
 - Description publique : **aucune** (le titre suffit).
 - Interne : `Contact : Tristan (Discord)`, puis `Notes :` si besoin (ex. `tous les 2e mercredis du mois`).
 
 **Créneau Libre** (`colorId` 3)
 
-- Titre : `JDR - Créneau Libre`
+- Titre : `Créneau Libre`
 - On garde le bouton « Demander à réserver la salle » : plus de `Inscription : aucune` ni de « n'utilisez pas le
   système de réservation ».
 
@@ -152,33 +155,33 @@ Tarif : consommation minimum de 90 € par table
 
 **MJ PRO - Vadrouilles & Magie** (`colorId` 4)
 
-- Titre : `JDR - Vadrouilles & Magie`, ou `JDR - Vadrouilles & Magie : <thème>` pour une session à thème (ex. `JDR - Vadrouilles & Magie : Vilains`)
+- Titre : `Vadrouilles & Magie`, ou `Vadrouilles & Magie : <thème>` pour une session à thème (ex. `Vadrouilles & Magie : Vilains`)
 
 ```
 <Thème de la session en 1 phrase, si session à thème>
 
 Vadrouilles & Magie : comédien·nes, auteur·ices et MJ professionnel·les qui créent des parties de JDR sur mesure, avec des scénarios uniques. Spécialistes de Donjons & Dragons et de Cyberpunk RED, avec un focus sur l'immersion, l'interprétation et les backgrounds.
 
-Places : 6, inscription obligatoire
+Places : <nombre>, inscription obligatoire
 Tarif : 30 € par personne pour le MJ + consommation minimum de 90 € par table
 ```
 
 **OS & Initiation** (`colorId` 5)
 
-- Titre : `JDR - Initiation <Jeu>` ou `JDR - One-shot <Jeu>`, ex. `JDR - Initiation Daggerheart`, `JDR - One-shot Sérum`
+- Titre : `Initiation <Jeu>` ou `One-shot <Jeu>`, ex. `Initiation Daggerheart`, `One-shot Sérum`
 
 ```
 <Présentation du jeu en 2 ou 3 phrases>
 
 Niveau : en anglais
 Animé par : Clémence
-Places : 5, inscription obligatoire
+Places : <nombre>, inscription obligatoire
 Tarif : consommation minimum de 90 € pour le groupe
 ```
 
 **MJ PRO - Campagne Semi-Ouverte** (`colorId` 8)
 
-- Titre : `JDR - Campagne <Nom>`, ex. `JDR - Campagne L'Office des Méandres`
+- Titre : `Campagne <Nom>`, ex. `Campagne L'Office des Méandres`
 - Pas de ligne `Tarif :` (campagne récurrente).
 
 ```
@@ -215,7 +218,7 @@ consigne de la routine si on la retient, pas dans l'outil :
 Pour les évènements **organisés par d'autres** et accueillis au bar : Joueurs Anonymes, ChessBar, soirées
 Marie&TheSapphics, tournoi Machicoulis, etc.
 
-- Dans les deux calendriers, **sans bouton**. Si l'organisateur gère les inscriptions, on choisit « Lien d'inscription
+- Couleur **Myrtille** (`colorId` 9) dans les deux calendriers, **sans bouton**. Si l'organisateur gère les inscriptions, on choisit « Lien d'inscription
   externe » et le site affiche « S'inscrire sur le site de l'organisateur ». En JDR, elle bloque la salle.
 - Titre : le nom de l'évènement tel que l'organisateur l'appelle, sans jauge (`ChessBar`, pas `CHESSBAR x12`).
 
@@ -225,9 +228,11 @@ Marie&TheSapphics, tournoi Machicoulis, etc.
 Organisé par : Joueurs Anonymes
 ```
 
+La ligne `Organisé par :` est supprimée si la présentation nomme déjà l'organisateur (ex. « ChessBar est un concept… »).
+
 - Interne : `Contact :` et `Places :` (jauge réelle, ex. `12`).
 
-Créer la catégorie demande une couleur libre dans les deux agendas, et une modification **du site public aussi**
+Myrtille n'est utilisée par aucun évènement d'août à décembre. Créer la catégorie demande une modification **du site public aussi**
 (tableau `COULEURS` de `docs/index.html`, en même temps que `Categories.gs`).
 
 ### 3.4 Sans catégorie
@@ -271,7 +276,7 @@ Réécrire les évènements à venir au nouveau format dans Google Agenda, caté
 - Écriture inclusive (`accompagné.e.s` / `accompagné·es`) et tirets (`-`, `–`, `—`) mélangés.
 - Partie interne : `Places/Publié/Notes`, `Réservation de`, `Client`, `MJ`, `Statut`, `Type`… et beaucoup de
   `---interne---` ou de `Notes :` vides.
-- Titres : « Tables Ouvertes - Jeudi » ou « du Jeudi ! », « Réservation client » ou « Client », « INITIATION » ou
+- Titres : préfixe « JDR - » redondant, « Tables Ouvertes - Jeudi » ou « du Jeudi ! », « Réservation client » ou « Client », « INITIATION » ou
   « Initiation », faute « Découvertre ».
 
 **À corriger, même sans changer de format**
