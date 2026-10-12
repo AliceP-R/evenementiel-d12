@@ -37,6 +37,8 @@ function corrigerEvenement(vue) {
   if (v.colorId && !categorie) aVerifier.push(`Couleur ${v.colorId} hors catégorie : choisir une catégorie`);
   // Ligue Ludique : écrite par la routine Claude, ni corrigée ni listée ici
   if (v.colorId === '11' && v.calendrier === 'jdr') return { vue: v, changements, aVerifier };
+  // Annulé : on n'y touche plus (le titre « ANNULÉ - » et « Inscription : aucune » sont voulus)
+  if (estAnnule(v.titre)) return { vue: v, changements, aVerifier };
 
   // ---- Titre (charte § 2.5 et état des lieux) ----
   let titre = v.titre;

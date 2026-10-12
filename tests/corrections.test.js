@@ -87,3 +87,9 @@ test('écriture inclusive et prix, sans toucher aux liens', () => {
     'Les invité.e.s sont accompagné.e.s. 5€.\nhttps://site.fr/les.e.s'));
   assert.equal(r.vue.descriptionPublique, 'Les invité·es sont accompagné·es. 5 €.\nhttps://site.fr/les.e.s');
 });
+
+test('évènement annulé : pas de correction (titre en majuscules et « Inscription : aucune » voulus)', () => {
+  const r = corriger(evenement('jds', '9', 'ANNULÉ - Soirée jeux !', 'Annulé : salle indisponible\n\nInscription : aucune'));
+  assert.deepEqual(r.changements, []);
+  assert.deepEqual(r.aVerifier, []);
+});

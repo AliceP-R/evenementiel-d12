@@ -88,6 +88,18 @@ Cf. [formats-descriptions.md](formats-descriptions.md) § 2.4, 2.6 et 5.
 | Ordre | Places et Tarif sont ajoutées à la fin de la description publique, sur la ligne suivante si la description finit par `Scénario :`, `Niveau :`, `Animé par :` ou `Organisé par :`, sinon après une ligne vide. |
 | Correction en lot | Bouton « 🧹 Corriger en lot » : analyse une période (séries = un évènement), propose par catégorie les corrections de `Corrections.gs` avec aperçu, et ne réécrit (`patch` du titre et de la description) que les évènements cochés. La Ligue Ludique (routine Claude) n'est pas touchée. |
 
+### 4.1 quater Annulation ✅
+
+| Fonction | Détail |
+|---|---|
+| Bouton | « 🚫 Annuler » sur un évènement à venir et pas déjà annulé. Série : « cette date seulement » ou « toute la série ». |
+| Raison | Obligatoire, une ligne de texte, **publique** : 1re ligne de la description `Annulé : <raison>`. |
+| Google Agenda | `patch` du titre (`ANNULÉ - <titre>`) et de la description seulement. L'évènement reste public. Avec une raison, l'outil écrit toujours `Inscription : aucune`, sans liens par canal ni ligne `Places :`. |
+| Notes internes | En tête : `Annulé le JJ/MM/AAAA par <adresse> : <raison>` et `À annuler à la main : Meetup ⏳ <lien> · Vibes ⏳ · Discord ⏳`. |
+| À faire à la main | Après l'annulation, liste Meetup, Vibes, Discord avec le lien connu (liens par canal, sinon premier lien du bon site dans les notes internes ou la description), à cocher au fur et à mesure. |
+| Relecture | Titre qui commence par « ANNULÉ » (ou « Annulé ») = annulé : badge « 🚫 Annulé », champ « Raison de l'annulation » dans le formulaire. Pas proposé dans la correction en lot. Dupliquer ou en faire un modèle retire l'annulation. |
+| Journal | Action « Annulation » ou « Annulation (toute la série) ». |
+
 ### 4.2 Champs du formulaire et correspondance Google Agenda
 
 | Champ | Écrit dans Google Agenda |
