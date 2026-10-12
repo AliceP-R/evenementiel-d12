@@ -4,6 +4,7 @@
     annee: new Date().getFullYear(),
     mois: new Date().getMonth(), // 0 = janvier
     filtre: 'tous',
+    voirPasses: false,  // affiche aussi les évènements terminés
     categories: { jds: [], jdr: [] },
     evenements: [],
     enCours: null,      // évènement (ou modèle) ouvert dans le formulaire
@@ -70,15 +71,30 @@
   }
 
   // ---------- Liste ----------
+  // Terminé = l'heure de fin est passée (fin du dernier jour pour une journée entière)
+  function estTermine(ev) {
+    const fin = ev.journeeEntiere ? (ev.dateFin || ev.date) + 'T23:59:59' : (ev.dateFin || ev.date) + 'T' + ev.heureFin;
+    return new Date(fin) < new Date();
+  }
+
   function afficherListe() {
     const liste = $('#liste');
     liste.textContent = '';
-    const evts = etat.evenements
-      .filter(e => etat.filtre === 'tous' || e.calendrier === etat.filtre)
+    const duCalendrier = etat.evenements.filter(e => etat.filtre === 'tous' || e.calendrier === etat.filtre);
+    const nbTermines = duCalendrier.filter(estTermine).length;
+    const evts = duCalendrier
+      .filter(e => etat.voirPasses || !estTermine(e))
       .sort((a, b) => (a.date + (a.heureDebut || '')).localeCompare(b.date + (b.heureDebut || '')));
 
+    if (nbTermines) {
+      liste.append(el('p', { class: 'bascule-passes' },
+        el('button', { type: 'button', class: 'btn btn-lien', 'aria-pressed': String(etat.voirPasses),
+          onclick: () => { etat.voirPasses = !etat.voirPasses; afficherListe(); } },
+          etat.voirPasses ? '🙈 Masquer les évènements passés' : `🕘 Voir les évènements passés (${nbTermines})`)
+      ));
+    }
     if (!evts.length) {
-      liste.append(el('p', { class: 'vide' }, 'Aucun évènement ce mois-ci.'));
+      liste.append(el('p', { class: 'vide' }, nbTermines ? 'Aucun évènement à venir ce mois-ci.' : 'Aucun évènement ce mois-ci.'));
       return;
     }
     const parJour = {};
@@ -87,7 +103,7 @@
     Object.keys(parJour).sort().forEach(jour => {
       liste.append(el('section', { class: 'jour' + (jour === ajd ? ' aujourdhui' : '') },
         el('h3', {}, jourLong(jour) + (jour === ajd ? ' · aujourd\'hui' : '')),
-        parJour[jour].map(e => carte(e, jour < ajd))
+        parJour[jour].map(e => carte(e, estTermine(e)))
       ));
     });
   }
