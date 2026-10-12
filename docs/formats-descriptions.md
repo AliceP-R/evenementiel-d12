@@ -50,7 +50,7 @@ Les lignes sont toujours dans cet ordre, avec ces libellés exacts. Une ligne sa
 | `Niveau :` | Si ce n'est pas évident d'après la catégorie | `Niveau : déconseillé aux débutant·es` · `Niveau : en anglais` |
 | `Animé par :` | Personne ou groupe qui anime (toujours en public, plus « MJ : » ni « Conteur : ») | `Animé par : Martin` · `Animé par : les autrices du jeu` |
 | `Places :` | **Écrite par l'outil** (cf. § 2.4) : total seulement, ou « complet ». La répartition par canal va en interne. | `Places : 15, inscription recommandée` · `Places : complet` |
-| `Tarif :` | En JDS, **écrite par l'outil** (case Tarif, § 3.1). En JDR, tapée dans la présentation (cf. § 3.2). | `Tarif : consommation minimum de 90 € pour le groupe` |
+| `Tarif :` | **Écrite par l'outil** (choix Tarif, cf. § 2.6). | `Tarif : consommation minimum de 90 € pour le groupe` |
 
 ### 2.2 Lignes lues par le site (écrites par l'outil)
 
@@ -108,23 +108,35 @@ Une fois la case cochée, il faut remplir le nombre et l'inscription, ou cocher 
 - Pas de MAJUSCULES pour un mot entier, pas de « ! » en fin de titre.
 - Jamais de texte d'attente du type « [Texte de présentation] » ou « (X places) » dans la partie publique.
 
-## 3. Modèles par catégorie
+### 2.6 Options du formulaire : disponibles sur tous les évènements
 
-### 3.1 JDS
+Toutes les options sont proposées pour **n'importe quel évènement**, quelle que soit sa catégorie. La catégorie ne
+change que la valeur proposée à l'ouverture d'un nouvel évènement, et ce qui est obligatoire.
 
-**Tarif : case à cocher.** La ligne `Tarif :` n'apparaît plus dans le champ « Description publique » du formulaire :
-on coche un choix, et c'est l'outil qui écrit la ligne dans Google Agenda à l'enregistrement, juste après les autres
-lignes pratiques. À l'ouverture d'un évènement, l'outil relit cette ligne, la retire du texte affiché et coche le bon
-choix (texte différent des deux tarifs connus = « Autre », avec ce texte), comme il le fait déjà pour `Inscription :`.
+| Option | Choix | Ce que l'outil écrit | Par défaut |
+|---|---|---|---|
+| Visibilité | Public / Privé | Privé = invisible sur le site (cf. § 3.5) | Public |
+| Gérer les inscriptions | Case à cocher, puis nombre de places, inscription obligatoire ou recommandée, Complet | `Places : …` ; Complet masque le bouton (cf. § 2.4) | Cochée pour BOTC, Tables Ouvertes, Découverte, Vadrouilles & Magie, OS & Initiation, Campagne |
+| Tarif | Formule / Tarifs habituels / Autre (champ de texte) / rien | `Tarif : …` (rien = pas de ligne) | Rien ; **obligatoire** pour BOTC, Tables Ouvertes, Découverte |
+| Inscription sur le site | Bouton habituel / Lien externe / Pas d'inscription | `Inscription : <lien>` ou `Inscription : aucune` | Bouton habituel |
+| Liens propres à l'évènement | Vibes, Meetup, Discord | `Vibes :`, `Meetup :`, `Discord :` | Vides |
+
+**Tarif.** La ligne `Tarif :` n'apparaît plus dans le champ « Description publique » : on fait un choix, et l'outil
+écrit la ligne dans Google Agenda à l'enregistrement, juste après les autres lignes pratiques. À l'ouverture d'un
+évènement, il relit la ligne, la retire du texte affiché et retrouve le choix (texte différent des tarifs connus =
+« Autre », avec ce texte).
 
 | Choix | Ligne écrite |
 |---|---|
 | Formule | `Tarif : formule avec alcool 18 €, sans alcool 16 €` |
 | Tarifs habituels | `Tarif : tarifs et fonctionnement habituels du bar` |
-| Autre, avec un champ de texte | `Tarif : <texte saisi>` |
+| Autre, avec un champ de texte | `Tarif : <texte saisi>`, ex. `Tarif : 30 € par personne pour le MJ + consommation minimum de 90 € par table` |
 
-Le choix est **obligatoire** (sans choix par défaut) pour Soirée BOTC, Tables Ouvertes et Soirée Découverte, et
-**facultatif** pour Évènement externe et sans catégorie (rien de coché = pas de ligne `Tarif :`).
+## 3. Modèles par catégorie
+
+### 3.1 JDS
+
+Tarif : choix obligatoire pour les trois catégories JDS (cf. § 2.6).
 
 **Soirée BOTC** (`colorId` 3)
 
@@ -285,10 +297,10 @@ Réservé aux **privatisations** et aux **fermetures** :
 - Visibilité : **au choix** (cf. § 3.5).
 - Pas de description publique ; en interne : `Contact :` et `Notes :`.
 
-### 3.5 Visibilité des évènements externes et sans catégorie
+### 3.5 Visibilité
 
 Le calendrier sert aussi à l'équipe : une prestation réservée par quelqu'un n'a pas à être visible des client·es. Le champ
-« Visibilité » du formulaire (Public / Privé) reste donc un vrai choix pour ces deux types.
+« Visibilité » du formulaire (Public / Privé) est donc un vrai choix, sur tous les évènements.
 
 | Visibilité | Sur le site public | « La salle est-elle libre ? » (JDR) |
 |---|---|---|
@@ -305,9 +317,10 @@ Rien n'est encore fait. Pistes possibles une fois la charte validée :
 
 1. Préremplir la description avec le modèle de la catégorie choisie, sans écraser un texte déjà saisi.
 2. Refuser l'enregistrement tant qu'un repère « [à compléter] » reste dans la description publique.
-3. Retirer le champ Instagram, et ne plus proposer « Pas d'inscription » quand la catégorie n'a pas de bouton.
+3. Retirer le champ Instagram.
 4. Ajouter la catégorie « Évènement externe ».
-5. Case Tarif pour les évènements JDS : Formule, Tarifs habituels ou Autre (champ de texte).
+5. Choix Tarif sur tous les évènements : Formule, Tarifs habituels, Autre (champ de texte) ou rien ; obligatoire pour
+   BOTC, Tables Ouvertes et Découverte.
 6. Case « Gérer les inscriptions » sur tous les évènements, avec les champs Places (nombre, inscription obligatoire ou
    recommandée, Complet) et le bouton masqué automatiquement quand c'est complet.
 
