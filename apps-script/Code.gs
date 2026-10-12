@@ -138,13 +138,41 @@ function enregistrerEvenement(f) {
     else delete ressource.recurrence;
   }
 
-  const resultat = f.id
-    ? Calendar.Events.update(ressource, cal.id, f.id)
-    : Calendar.Events.insert(ressource, cal.id);
+  const resultat = !f.id ? Calendar.Events.insert(ressource, cal.id)
+    : occurrence || !ressource.recurrence ? Calendar.Events.update(ressource, cal.id, f.id)
+    : modifierSerie_(cal.id, f.id, () => Calendar.Events.update(ressource, cal.id, f.id));
 
   const action = !f.id ? 'Création' : occurrence ? 'Modification (cette date)' : 'Modification';
   journaliser_(email, action, f.calendrier, ressource.summary, f.date, resultat.id);
   return resultat.id;
+}
+
+// Modifie une série (ecrire) sans perdre ses dates modifiées : Google Agenda leur réécrit le titre et la
+// description de la série. On note avant ce que chaque date a de propre, et on le remet après.
+function modifierSerie_(calendarId, serieId, ecrire) {
+  const serie = Calendar.Events.get(calendarId, serieId);
+  const datesModifiees = [];
+  const timeMax = new Date(Date.now() + 2 * 365 * 24 * 3600 * 1000).toISOString();
+  let pageToken;
+  do {
+    const reponse = Calendar.Events.instances(calendarId, serieId, { timeMax, maxResults: 250, pageToken });
+    (reponse.items || []).forEach(instance => {
+      if (instance.status === 'cancelled') return;
+      const champs = champsPropresALaDate(serie, instance);
+      if (Object.keys(champs).length) datesModifiees.push({ id: instance.id, champs });
+    });
+    pageToken = reponse.nextPageToken;
+  } while (pageToken);
+
+  const resultat = ecrire();
+  datesModifiees.forEach(d => {
+    try {
+      Calendar.Events.patch(d.champs, calendarId, d.id);
+    } catch (e) {
+      console.error(`Date modifiée ${d.id} non remise : ${e}`); // ex. date disparue si les horaires de la série ont changé
+    }
+  });
+  return resultat;
 }
 
 // Supprime un évènement. portee = 'serie' pour supprimer toute la série d'une occurrence.

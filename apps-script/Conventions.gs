@@ -289,3 +289,17 @@ function construireRecurrence(rec, journeeEntiere) {
   }
   return [regle];
 }
+
+// ---------- Dates modifiées d'une série ----------
+
+// Champs qu'une date modifiée a changés par rapport à sa série (titre, description, couleur).
+// Google Agenda les écrase quand on modifie la série (ex. une Réservation Client posée sur un Créneau Libre
+// redevient « Créneau Libre ») : on les remet ensuite. Renvoie {} si la date suit la série.
+function champsPropresALaDate(serie, instance) {
+  const propres = {};
+  ['summary', 'description', 'colorId'].forEach(champ => {
+    const valeur = instance[champ] ? String(instance[champ]) : '';
+    if (valeur !== (serie[champ] ? String(serie[champ]) : '') && (valeur || champ !== 'colorId')) propres[champ] = valeur;
+  });
+  return propres;
+}

@@ -180,7 +180,10 @@ function appliquerCorrections(selection) {
       const ev = Calendar.Events.get(cal.id, id, { timeZone: FUSEAU });
       const c = corrigerEvenement(versVue_(calendrier, ev));
       if (!c.changements.length) return;
-      Calendar.Events.patch({ summary: c.vue.titre, description: construireDescription(c.vue) }, cal.id, id);
+      const patcher = () => Calendar.Events.patch({ summary: c.vue.titre, description: construireDescription(c.vue) }, cal.id, id);
+      // Série : ses dates modifiées (ex. Réservation Client sur un Créneau Libre) ne doivent pas reprendre ce texte
+      if (ev.recurrence && ev.recurrence.length) modifierSerie_(cal.id, id, patcher);
+      else patcher();
       journaliser_(email, 'Correction charte', calendrier, c.vue.titre, lireHoraires(ev.start, ev.end).date, id);
       corriges++;
     } catch (e) {

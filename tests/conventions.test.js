@@ -221,3 +221,15 @@ test('récurrence : lire', () => {
   assert.equal(C.lireRecurrence(['RRULE:FREQ=WEEKLY;COUNT=5']).frequence, 'autre');
   assert.equal(C.lireRecurrence(['RRULE:FREQ=WEEKLY', 'EXDATE:20261010T190000Z']).frequence, 'autre');
 });
+
+test('champsPropresALaDate : ce que la date modifiée a changé par rapport à sa série', () => {
+  const serie = { summary: 'Créneau Libre', description: 'Tarif : consommation minimum de 90 €', colorId: '3' };
+  assert.deepEqual(plain(C.champsPropresALaDate(serie, Object.assign({ id: 'a_1' }, serie))), {});
+  assert.deepEqual(plain(C.champsPropresALaDate(serie, {
+    summary: 'Réservation Client', description: '📌 Cette session est réservée par un client.\n\n---interne---\nClient : Dupont', colorId: '2'
+  })), {
+    summary: 'Réservation Client', description: '📌 Cette session est réservée par un client.\n\n---interne---\nClient : Dupont', colorId: '2'
+  });
+  // Couleur absente : la date suit celle de la série (on n'écrit pas de couleur vide)
+  assert.deepEqual(plain(C.champsPropresALaDate(serie, { summary: 'Créneau Libre', description: '' })), { description: '' });
+});
