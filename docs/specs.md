@@ -183,7 +183,9 @@ Sans catégorie : pas de bouton, bloque la salle.
 1. **Mise en service du MVP** : déploiement (cf. README), essai sur quelques évènements, puis usage courant.
 2. **Confort** :
    - vue calendrier en plus de la liste ;
-   - aperçu de la fenêtre telle qu'elle apparaîtra sur le site ;
+   - ✅ aperçu de la fenêtre telle qu'elle apparaîtra sur le site : bouton « 👁️ Voir » de la liste et « 👁️ Aperçu sur
+     le site » du formulaire (avant d'enregistrer). Reprend `openEventModal()` du site public (description, liens,
+     bouton d'inscription) : à garder aligné si le site change ;
    - contrôle des incohérences (conventions mal saisies directement dans Google Agenda) ;
    - recherche.
 3. **Catégories éditables** : catégories stockées dans un Google Sheet, modifiables dans l'admin. Le `Code.gs` public les

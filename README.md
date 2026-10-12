@@ -82,6 +82,11 @@ Pour que Clémence puisse s'en servir, ajouter son adresse à `EMAILS_AUTORISES`
 - **Évènement externe** (Myrtille) : nouvelle catégorie, à mettre en ligne **en même temps** dans le site public
   (branche `claude/compassionate-lamport-z7f6ms` du dépôt `calendrier-d12`).
 
+## Aperçu
+
+**👁️ Voir** (liste) ou **👁️ Aperçu sur le site** (formulaire, avant d'enregistrer) affiche la fenêtre de l'évènement
+telle que le site public la montrera : date, description publique, bouton d'inscription. Rien n'est enregistré.
+
 ## Bon à savoir
 
 - Le site public n'est pas modifié : il continue de lire Google Agenda comme avant.

@@ -171,9 +171,23 @@
 
       <div class="actions">
         <button type="button" class="btn" id="btn-annuler">Annuler</button>
+        <button type="button" class="btn" id="btn-apercu-form">👁️ Aperçu sur le site</button>
         <button type="submit" class="btn btn-plein" id="btn-enregistrer">Enregistrer</button>
       </div>
     </form>
+  </dialog>
+
+  <!-- Aperçu : la fenêtre de l'évènement telle qu'elle s'affiche sur calendrier.au-de12paris.com -->
+  <dialog id="dlg-apercu" class="apercu-site" aria-labelledby="apercu-titre">
+    <p id="apercu-avertissements" class="encart" hidden></p>
+    <div class="site-modal">
+      <div class="site-modal-header">
+        <h2 id="apercu-titre"></h2>
+        <button type="button" class="site-modal-close" id="apercu-fermer" aria-label="Fermer l'aperçu">✕</button>
+      </div>
+      <div class="site-modal-body" id="apercu-corps"></div>
+    </div>
+    <p class="discret">Aperçu de la fenêtre du site public. Le bouton ne fait rien ici.</p>
   </dialog>
 
   <!-- Charte : modèles d'évènements et textes types -->

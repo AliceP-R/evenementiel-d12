@@ -114,6 +114,7 @@
         )
       ),
       el('div', { class: 'evt-actions' },
+        el('button', { type: 'button', class: 'btn btn-petit', onclick: () => apercu(ev) }, '👁️ Voir'),
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => modifier(ev) }, '✏️ Modifier'),
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => dupliquer(ev) }, '📄 Dupliquer'),
         el('button', { type: 'button', class: 'btn btn-petit', title: 'En faire un modèle', onclick: () => modeleDepuisEvenement(ev) }, '📌 Modèle'),
@@ -576,6 +577,131 @@
       .finally(() => { bouton.disabled = false; });
   }
 
+  // ---------- Aperçu sur le site ----------
+  // Reprend openEventModal() et ses fonctions de docs/index.html (dépôt calendrier-d12) : à garder alignés.
+
+  function linkifySite(html) {
+    return html.split(/(<a\b[^>]*>[\s\S]*?<\/a>|<[^>]*>)/i).map((part, i) => {
+      if (i % 2) return part;
+      return part.replace(/https?:\/\/(?:(?!&nbsp;)[^\s<>"'])+/gi, url => {
+        const fin = url.match(/[.,;:!?)\]]+$/);
+        const lien = fin ? url.slice(0, -fin[0].length) : url;
+        return `<a href="${lien}" target="_blank" rel="noopener">${lien}</a>${fin ? fin[0] : ''}`;
+      });
+    }).join('');
+  }
+
+  function extractInscriptionSite(description) {
+    const re = /(?:<(?!br)[a-z][^>]*>\s*)*inscription(?:\s|&nbsp;|<[^>]*>)*:([\s\S]*?)(?=<br\s*\/?>|\n|<\/p>|<\/div>|$)/i;
+    const match = description.match(re);
+    if (!match) return { description, inscription: null };
+    const rest = match[1];
+    const url = rest.match(/https?:\/\/[^\s"'<>]+/);
+    const text = rest.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    let inscription = null;
+    if (url) inscription = { url: url[0].replace(/&amp;/g, '&') };
+    else if (/^aucune/i.test(text)) inscription = { none: true };
+    else return { description, inscription: null };
+    const cleaned = description.replace(match[0], '').replace(/^(?:\s|<br\s*\/?>)+|(?:\s|<br\s*\/?>)+$/gi, '');
+    return { description: cleaned, inscription };
+  }
+
+  function extractCanauxSite(description) {
+    const canaux = {};
+    const re = /(^|\n|<br\s*\/?>|<p[^>]*>|<div[^>]*>)(?:<(?!br)[a-z][^>]*>\s*)*(vibes|meetup|discord|instagram)(?:\s|&nbsp;|<[^>]*>)*:([^\n]*?)(?=<br\s*\/?>|\n|<\/p>|<\/div>|$)/gi;
+    const cleaned = description.replace(re, (ligne, avant, canal, rest) => {
+      const url = rest.match(/https?:\/\/[^\s"'<>]+/);
+      if (!url) return ligne;
+      canaux[canal.toLowerCase()] = url[0].replace(/&amp;/g, '&');
+      return /^(\n|<br)/i.test(avant) ? '' : avant;
+    }).replace(/^(?:\s|<br\s*\/?>)+|(?:\s|<br\s*\/?>)+$/gi, '');
+    return { description: cleaned, canaux };
+  }
+
+  // ev : champs du formulaire (évènement de la liste ou formulaire en cours) ; description : partie publique écrite
+  function afficherApercu(ev, description) {
+    const avertissements = [];
+    if (ev.visibilite === 'privee') avertissements.push('🔒 Évènement privé : il n\'apparaît pas sur le site.');
+    if (etat.mode === 'modele') avertissements.push('📋 Modèle : la date est celle du jour, pour l\'exemple.');
+
+    const parsed = extractInscriptionSite(description);
+    let texte = parsed.description;
+    const inscription = parsed.inscription;
+    const cat = (etat.categories[ev.calendrier] || []).find(c => c.colorId === ev.colorId);
+    const date = ev.date || aujourdhui();
+    const fin = ev.journeeEntiere ? (ev.dateFin || date) + 'T23:59' : (ev.heureFin <= ev.heureDebut ? ajouterJour(date) : date) + 'T' + ev.heureFin;
+    let mode = null;
+    if (new Date(fin) < new Date()) avertissements.push('⌛ Évènement terminé : le site n\'affiche plus de bouton.');
+    else if (inscription) mode = inscription.url ? 'externe' : null;
+    else mode = cat ? cat.bouton : null;
+
+    let canaux = {};
+    if (mode === 'inscription' || mode === 'reservation') ({ description: texte, canaux } = extractCanauxSite(texte));
+    texte = linkifySite(texte);
+
+    const jour = versDate(date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const quand = ev.journeeEntiere ? jour : `${jour} à ${ev.heureDebut}`;
+
+    const corps = $('#apercu-corps');
+    corps.textContent = '';
+    corps.append(el('h3', {}, '📅 Date et heure'), el('p', {}, quand));
+    if (texte) {
+      const p = el('p', { style: 'white-space: pre-wrap;' });
+      p.innerHTML = texte; // même rendu que le site : texte déjà échappé par l'outil, liens ajoutés par linkifySite
+      corps.append(el('h3', {}, '📝 Description'), p);
+    }
+    if (ev.lieu) corps.append(el('h3', {}, '📍 Lieu'), el('p', {}, ev.lieu));
+    corps.append(el('h3', {}, 'Type'), el('p', {}, ev.calendrier === 'jds' ? '🎯 Jeux de société' : '⚔️ Jeux de rôle'));
+
+    if (mode) {
+      const noms = { discord: 'Discord', instagram: 'Instagram', meetup: 'Meetup', vibes: 'Vibes' };
+      const propres = Object.keys(canaux).map(c => noms[c]);
+      const libelle = mode === 'externe' ? '✋ S\'inscrire sur le site de l\'organisateur'
+        : mode === 'reservation' ? '🔑 Demander à réserver la salle' : '✋ Demander à m’inscrire';
+      corps.append(el('div', { class: 'inscription' },
+        el('span', { class: 'site-btn-plein', title: mode === 'externe' ? inscription.url : '' }, libelle),
+        mode === 'externe'
+          ? el('p', { class: 'insc-aide' }, 'Ouvre : ' + inscription.url)
+          : el('p', { class: 'insc-aide' }, 'Ouvre un petit formulaire (prénom, nombre de personnes) puis Mail, Discord, Instagram' +
+            (mode === 'inscription' ? ', Meetup, Vibes' : '') + '.' +
+            (propres.length ? ' Liens propres à cet évènement : ' + propres.join(', ') + '.' : ' Liens habituels du bar.'))));
+    } else if (!avertissements.some(a => a.startsWith('⌛'))) {
+      corps.append(el('p', { class: 'insc-aide' }, 'Pas de bouton d\'inscription sur le site.'));
+    }
+
+    $('#apercu-titre').textContent = ev.titre || 'Détails de l\'événement';
+    $('#apercu-avertissements').hidden = !avertissements.length;
+    $('#apercu-avertissements').textContent = avertissements.join(' ');
+    $('#dlg-apercu').showModal();
+  }
+
+  function ajouterJour(s) {
+    const d = versDate(s);
+    d.setDate(d.getDate() + 1);
+    return dateStr(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  // Évènement de la liste
+  function apercu(ev) {
+    etat.mode = 'evenement';
+    $('#statut').textContent = 'Préparation de l\'aperçu…';
+    appel('apercuEvenement', ev)
+      .then(r => { $('#statut').textContent = ''; afficherApercu(ev, r.description); })
+      .catch(e => { $('#statut').textContent = '❌ ' + e.message; });
+  }
+
+  // Formulaire en cours, avant d'enregistrer
+  function apercuFormulaire() {
+    const f = lireFormulaire();
+    f.lieu = etat.enCours.lieu || '';
+    const bouton = $('#btn-apercu-form');
+    bouton.disabled = true;
+    appel('apercuEvenement', f)
+      .then(r => afficherApercu(f, r.description))
+      .catch(e => { $('#form-erreur').textContent = e.message; $('#form-erreur').hidden = false; })
+      .finally(() => { bouton.disabled = false; });
+  }
+
   // ---------- Correction en lot ----------
   function ouvrirCorrections() {
     const f = $('#form-corrections');
@@ -701,6 +827,8 @@
   });
   $('#btn-annuler').addEventListener('click', () => $('#dlg-form').close());
   $('#btn-charte').addEventListener('click', ouvrirCharte);
+  $('#btn-apercu-form').addEventListener('click', apercuFormulaire);
+  $('#apercu-fermer').addEventListener('click', () => $('#dlg-apercu').close());
   $('#btn-corrections').addEventListener('click', ouvrirCorrections);
   $('#corrections-fermer').addEventListener('click', () => $('#dlg-corrections').close());
   $('#form-corrections').addEventListener('submit', analyserCorrections);

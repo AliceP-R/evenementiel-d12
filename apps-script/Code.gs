@@ -95,8 +95,17 @@ function versVue_(type, ev) {
     colorId: ev.colorId ? String(ev.colorId) : '',
     visibilite: visibilite === 'private' || visibilite === 'confidential' ? 'privee' : 'publique',
     recurrence: lireRecurrence(ev.recurrence),
+    lieu: ev.location || '', // affiché par le site public, seulement lu ici (aperçu)
     lienGoogle: ev.htmlLink || ''
   }, horaires, description);
+}
+
+// Aperçu : partie publique de la description, telle que le site la reçoit (après « ---interne--- » coupé)
+function apercuEvenement(f) {
+  verifierAcces_();
+  const description = construireDescription(f);
+  const coupure = description.search(MARQUEUR_INTERNE);
+  return { description: (coupure === -1 ? description : description.substring(0, coupure)).trim() };
 }
 
 // ---------- Écriture ----------
