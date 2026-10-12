@@ -6,6 +6,8 @@
 // Format écrit dans la description :
 //
 //   <description publique>
+//   Places : 12, inscription obligatoire   (ou « Places : complet », cf. champs Places)
+//   Tarif : <tarif>                        (cf. champ Tarif)
 //
 //   Inscription : <lien>          (ou « Inscription : aucune »)
 //   Vibes : <lien>
@@ -18,6 +20,16 @@
 
 const CANAUX = ['vibes', 'meetup', 'discord', 'instagram'];
 const NOMS_CANAUX = { vibes: 'Vibes', meetup: 'Meetup', discord: 'Discord', instagram: 'Instagram' };
+
+// Tarifs proposés dans le formulaire (charte : docs/formats-descriptions.md § 2.6)
+const TARIFS = {
+  formule: 'formule avec alcool 18 €, sans alcool 16 €',
+  habituel: 'tarifs et fonctionnement habituels du bar'
+};
+const MODES_PLACES = { obligatoire: 'inscription obligatoire', recommandee: 'inscription recommandée' };
+
+// Lignes de la description publique qui « collent » aux lignes Places / Tarif (même paragraphe)
+const LIGNE_PRATIQUE = /^\s*(scénario|niveau|animé par|organisé par|places|tarif)\s*:/i;
 
 // Même tolérance que stripInternal() dans le Code.gs du site public
 const MARQUEUR_INTERNE = /(?:-{2,}|[–—]+)\s*interne\s*(?:-{2,}|[–—]+)/i;
@@ -69,9 +81,18 @@ function lireDescription(description) {
 
   const inscription = { mode: 'normal', url: '' };
   const canaux = { vibes: '', meetup: '', discord: '', instagram: '' };
+  const places = placesVides();
+  const tarif = { choix: '', montant: '', texte: '' };
   const lignes = [];
 
   publique.split('\n').forEach(ligne => {
+    const p = ligne.match(/^\s*places\s*:\s*(.*)$/i);
+    if (p && !places.gerer) {
+      const lues = lirePlaces(p[1]);
+      if (lues) { Object.assign(places, lues); return; }
+    }
+    const t = ligne.match(/^\s*tarif\s*:\s*(.*\S)\s*$/i);
+    if (t && !tarif.choix) { Object.assign(tarif, lireTarif(t[1])); return; }
     const m = ligne.match(/^\s*(inscription|vibes|meetup|discord|instagram)\s*:\s*(.*)$/i);
     if (m) {
       const cle = m[1].toLowerCase();
@@ -87,29 +108,92 @@ function lireDescription(description) {
     lignes.push(ligne);
   });
 
+  // « Complet » : c'est l'outil qui a ajouté « Inscription : aucune » pour masquer le bouton
+  if (places.complet && inscription.mode === 'aucune') inscription.mode = 'normal';
+
   return {
     descriptionPublique: lignes.join('\n').replace(/\n{3,}/g, '\n\n').trim(),
     notesInternes,
     inscription,
-    canaux
+    canaux,
+    places,
+    tarif
   };
+}
+
+function placesVides() {
+  return { gerer: false, nombre: '', inscription: 'obligatoire', complet: false };
+}
+
+// « 12, inscription obligatoire » / « complet » → champs Places (null si le texte n'est pas reconnu : il reste dans la description)
+function lirePlaces(texte) {
+  const t = String(texte).trim();
+  if (/^complet\.?$/i.test(t)) return { gerer: true, nombre: '', inscription: 'obligatoire', complet: true };
+  const m = t.match(/^(\d+)\s*,\s*inscription\s+(obligatoire|recommand[ée]e)\.?$/i);
+  if (!m) return null;
+  return { gerer: true, nombre: m[1], inscription: /^oblig/i.test(m[2]) ? 'obligatoire' : 'recommandee', complet: false };
+}
+
+// Texte après « Tarif : » → choix du formulaire (un texte inconnu devient « Autre »)
+function lireTarif(texte) {
+  const t = String(texte).trim();
+  const normal = s => s.toLowerCase().replace(/\s+/g, ' ').replace(/\s*€/g, ' €').replace(/\.$/, '');
+  if (normal(t) === normal(TARIFS.formule)) return { choix: 'formule', montant: '', texte: '' };
+  if (normal(t) === normal(TARIFS.habituel)) return { choix: 'habituel', montant: '', texte: '' };
+  const m = t.match(/^consommation minimum de (\d+(?:[.,]\d+)?)\s*€\.?$/i);
+  if (m) return { choix: 'minimum', montant: m[1], texte: '' };
+  return { choix: 'autre', montant: '', texte: t };
+}
+
+// Champs Places → texte après « Places : » ('' si pas de ligne)
+function textePlaces(places) {
+  if (!places || !places.gerer) return '';
+  if (places.complet) return 'complet';
+  const nombre = String(places.nombre || '').trim();
+  return nombre ? `${nombre}, ${MODES_PLACES[places.inscription] || MODES_PLACES.obligatoire}` : '';
+}
+
+// Champ Tarif → texte après « Tarif : » ('' si pas de ligne)
+function texteTarif(tarif) {
+  if (!tarif) return '';
+  if (TARIFS[tarif.choix]) return TARIFS[tarif.choix];
+  if (tarif.choix === 'minimum') {
+    const montant = String(tarif.montant || '').trim();
+    return montant ? `consommation minimum de ${montant} €` : '';
+  }
+  if (tarif.choix === 'autre') return String(tarif.texte || '').trim();
+  return '';
 }
 
 // Champs du formulaire → description Google Agenda
 function construireDescription(champs) {
   const blocs = [];
-  const publique = (champs.descriptionPublique || '').trim();
+  let publique = (champs.descriptionPublique || '').trim();
+
+  // Places et Tarif : à la suite des lignes pratiques (Animé par…), sinon dans un paragraphe à part
+  const pratiques = [];
+  const places = textePlaces(champs.places);
+  if (places) pratiques.push('Places : ' + places);
+  const tarif = texteTarif(champs.tarif);
+  if (tarif) pratiques.push('Tarif : ' + tarif);
+  if (pratiques.length) {
+    const derniere = publique.split('\n').pop();
+    publique = publique ? publique + (LIGNE_PRATIQUE.test(derniere) ? '\n' : '\n\n') + pratiques.join('\n') : pratiques.join('\n');
+  }
   if (publique) blocs.push(echapperHtml(publique));
 
   const lignes = [];
   const inscription = champs.inscription || {};
-  if (inscription.mode === 'externe' && (inscription.url || '').trim()) {
+  const complet = !!(champs.places && champs.places.gerer && champs.places.complet);
+  if (complet) {
+    lignes.push('Inscription : aucune'); // complet : le bouton est masqué
+  } else if (inscription.mode === 'externe' && (inscription.url || '').trim()) {
     lignes.push('Inscription : ' + echapperHtml(inscription.url.trim()));
   } else if (inscription.mode === 'aucune') {
     lignes.push('Inscription : aucune');
   }
   // Le site n'utilise ces liens qu'avec le bouton habituel (sinon il les afficherait en texte brut)
-  const canaux = inscription.mode === 'externe' || inscription.mode === 'aucune' ? {} : champs.canaux || {};
+  const canaux = complet || inscription.mode === 'externe' || inscription.mode === 'aucune' ? {} : champs.canaux || {};
   CANAUX.forEach(c => {
     const url = (canaux[c] || '').trim();
     if (url) lignes.push(NOMS_CANAUX[c] + ' : ' + echapperHtml(url));

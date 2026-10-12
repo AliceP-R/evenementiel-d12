@@ -88,11 +88,45 @@
       </div>
 
       <label>Description publique
-        <textarea name="descriptionPublique" rows="5" placeholder="Visible par tout le monde sur le site. Les liens https://… deviennent cliquables."></textarea>
+        <textarea name="descriptionPublique" rows="5" placeholder="Présentation en 1 à 3 phrases, puis si besoin Scénario :, Niveau :, Animé par :. Pas de titre, d'horaires, de places ni de tarif : le site ou l'outil les affichent déjà."></textarea>
       </label>
       <label id="bloc-inserer-texte" class="inserer-texte" hidden>
         <select id="inserer-texte" aria-label="Insérer un texte type dans la description"></select>
       </label>
+
+      <fieldset>
+        <legend>Places</legend>
+        <label class="case"><input type="checkbox" name="placesGerer"> Gérer les inscriptions (ligne « Places : » sur le site)</label>
+        <div id="bloc-places" class="grille">
+          <label>Nombre de places<input type="number" name="placesNombre" min="1" max="999" inputmode="numeric"></label>
+          <label>Inscription
+            <select name="placesInscription">
+              <option value="obligatoire">Obligatoire</option>
+              <option value="recommandee">Recommandée</option>
+            </select>
+          </label>
+          <label class="case"><input type="checkbox" name="placesComplet"> Complet</label>
+          <small id="aide-complet" class="discret" hidden>Le site affichera « Places : complet » et masquera le bouton d'inscription.</small>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tarif</legend>
+        <div class="grille">
+          <label>Tarif affiché
+            <select name="tarifChoix">
+              <option value="">— Pas de ligne Tarif —</option>
+              <option value="formule">Formule : avec alcool 18 €, sans alcool 16 €</option>
+              <option value="habituel">Tarifs et fonctionnement habituels du bar</option>
+              <option value="minimum">Consommation minimum…</option>
+              <option value="autre">Autre…</option>
+            </select>
+            <small id="aide-tarif" class="discret"></small>
+          </label>
+          <label id="bloc-tarif-montant">Montant minimum (€)<input type="number" name="tarifMontant" min="0" step="any" inputmode="decimal" placeholder="90"></label>
+        </div>
+        <label id="bloc-tarif-texte">Texte du tarif<input name="tarifTexte" maxlength="300" placeholder="Ex. : 30 € par personne pour le MJ + consommation minimum de 90 € par table"></label>
+      </fieldset>
 
       <fieldset>
         <legend>Inscription sur le site</legend>

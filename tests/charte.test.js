@@ -22,7 +22,9 @@ const botc = {
   id: 'a1b2c3d4', nom: 'Soirée BOTC', calendrier: 'jds', colorId: '3', titre: 'Blood on the Clocktower',
   heureDebut: '19:30', heureFin: '00:30', visibilite: 'publique', descriptionPublique: 'Débutants bienvenus !\nOn explique tout.',
   inscriptionMode: 'normal', inscriptionUrl: '', vibes: '', meetup: 'https://meetup.com/x', discord: '', instagram: '',
-  notesInternes: 'Sortir la malle BOTC'
+  notesInternes: 'Sortir la malle BOTC',
+  placesGerer: 'oui', placesNombre: '12', placesInscription: 'obligatoire', placesComplet: '',
+  tarifChoix: 'formule', tarifMontant: '', tarifTexte: ''
 };
 
 test('un modèle fait l\'aller-retour objet → ligne du Sheet → objet', () => {
@@ -68,6 +70,18 @@ test('deux éléments d\'une même liste ne peuvent pas porter le même nom', ()
   assert.equal(t.texte, 'Nouveau texte');
 });
 
+test('validerElementCharte : places et tarif d\'un modèle', () => {
+  const m = C.validerElementCharte('modeles', Object.assign({}, botc, {
+    placesGerer: 'non', placesComplet: 'oui', tarifChoix: 'formule', tarifMontant: '90', tarifTexte: 'x'
+  }), []);
+  assert.equal(m.placesGerer, '');
+  assert.equal(m.placesComplet, '');
+  assert.equal(m.tarifMontant, '');
+  assert.equal(m.tarifTexte, '');
+  assert.throws(() => C.validerElementCharte('modeles', Object.assign({}, botc, { placesNombre: 'douze' }), []), /nombre de places/);
+  assert.throws(() => C.validerElementCharte('modeles', Object.assign({}, botc, { tarifChoix: 'minimum', tarifMontant: '90 €' }), []), /montant/);
+});
+
 test('un modèle sans catégorie ni horaires est accepté', () => {
   const m = C.validerElementCharte('modeles', { nom: 'Évènement privé', calendrier: 'jdr', visibilite: 'privee' }, []);
   assert.equal(m.colorId, '');
@@ -84,8 +98,10 @@ test('les modèles et textes de départ respectent la validation de la charte', 
   modeles.forEach(m => deja.push(C.validerElementCharte('modeles', m, deja)));
   const dejaT = [];
   textes.forEach(t => dejaT.push(C.validerElementCharte('textes', t, dejaT)));
-  // Charte § 2.2 : plus de ligne Instagram ni d'« Inscription : aucune » dans les modèles
-  modeles.forEach(m => assert.doesNotMatch(m.descriptionPublique, /^(Instagram|Inscription)\s*:/m, m.nom));
+  // Charte § 2.2, 2.4, 2.6 : ni Instagram, ni Inscription, ni Places, ni Tarif écrits à la main dans les modèles
+  modeles.forEach(m => assert.doesNotMatch(m.descriptionPublique, /^(Instagram|Inscription|Places|Tarif)\s*:/m, m.nom));
+  // Tarif obligatoire pour BOTC, Tables Ouvertes, Découverte (§ 2.6)
+  modeles.filter(m => m.calendrier === 'jds' && ['3', '5', '7'].includes(m.colorId)).forEach(m => assert.ok(m.tarifChoix, m.nom));
 });
 
 test('champsACompleter repère les « [à compléter] » restés dans un évènement', () => {

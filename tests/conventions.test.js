@@ -23,6 +23,8 @@ function stripInternal(description) {
 }
 
 const plain = obj => JSON.parse(JSON.stringify(obj)); // objets créés dans un autre contexte vm
+const SANS_PLACES = { gerer: false, nombre: '', inscription: 'obligatoire', complet: false };
+const SANS_TARIF = { choix: '', montant: '', texte: '' };
 
 test('construireDescription : ordre et format attendus par le site', () => {
   const d = C.construireDescription({
@@ -70,7 +72,9 @@ test('aller-retour construire → lire', () => {
     descriptionPublique: 'Ligne 1\n\nLigne 3 avec https://lien.fr & <b>',
     notesInternes: 'Note 1\nNote 2',
     inscription: { mode: 'normal', url: '' },
-    canaux: { vibes: 'https://vibes.lgbt/a', meetup: '', discord: 'https://discord.com/c', instagram: '' }
+    canaux: { vibes: 'https://vibes.lgbt/a', meetup: '', discord: 'https://discord.com/c', instagram: '' },
+    places: SANS_PLACES,
+    tarif: SANS_TARIF
   };
   assert.deepEqual(plain(C.lireDescription(C.construireDescription(champs))), champs);
 
@@ -107,8 +111,63 @@ test('lireDescription : vide', () => {
   assert.deepEqual(plain(C.lireDescription(undefined)), {
     descriptionPublique: '', notesInternes: '',
     inscription: { mode: 'normal', url: '' },
-    canaux: { vibes: '', meetup: '', discord: '', instagram: '' }
+    canaux: { vibes: '', meetup: '', discord: '', instagram: '' },
+    places: SANS_PLACES,
+    tarif: SANS_TARIF
   });
+});
+
+test('Places et Tarif : lignes écrites à la suite des lignes pratiques', () => {
+  const d = C.construireDescription({
+    descriptionPublique: 'Un jeu de mystère.\n\nScénario : Trouble Brewing\nAnimé par : Martin',
+    places: { gerer: true, nombre: '12', inscription: 'obligatoire', complet: false },
+    tarif: { choix: 'formule' },
+    inscription: { mode: 'normal' }, canaux: {}
+  });
+  assert.equal(d, 'Un jeu de mystère.\n\nScénario : Trouble Brewing\nAnimé par : Martin\n' +
+    'Places : 12, inscription obligatoire\nTarif : formule avec alcool 18 €, sans alcool 16 €');
+  // Sans ligne pratique avant : paragraphe à part
+  assert.equal(C.construireDescription({
+    descriptionPublique: 'Venez jouer.', places: { gerer: true, nombre: '15', inscription: 'recommandee' },
+    tarif: { choix: 'minimum', montant: '90' }, inscription: { mode: 'normal' }, canaux: {}
+  }), 'Venez jouer.\n\nPlaces : 15, inscription recommandée\nTarif : consommation minimum de 90 €');
+  // Case décochée ou tarif vide : pas de ligne
+  assert.equal(C.construireDescription({
+    descriptionPublique: 'X', places: { gerer: false, nombre: '12' }, tarif: { choix: '' }, inscription: { mode: 'normal' }, canaux: {}
+  }), 'X');
+});
+
+test('Places : complet masque le bouton, et se relit comme « bouton habituel + complet »', () => {
+  const champs = {
+    descriptionPublique: 'Campagne de D&D.\n\nAnimé par : Balthazar',
+    notesInternes: 'Places : 3 Discord / 3 Vibes',
+    inscription: { mode: 'normal', url: '' },
+    canaux: { vibes: '', meetup: '', discord: '', instagram: '' },
+    places: { gerer: true, nombre: '', inscription: 'obligatoire', complet: true },
+    tarif: SANS_TARIF
+  };
+  const d = C.construireDescription(champs);
+  assert.equal(d, 'Campagne de D&amp;D.\n\nAnimé par : Balthazar\nPlaces : complet\n\nInscription : aucune\n\n' +
+    '---interne---\nPlaces : 3 Discord / 3 Vibes');
+  assert.deepEqual(plain(C.lireDescription(d)), champs); // la ligne Places interne reste dans les notes
+});
+
+test('Tarif : relecture des choix, « Autre » pour un texte inconnu', () => {
+  const tarif = d => plain(C.lireDescription(d)).tarif;
+  assert.equal(tarif('Tarif : formule avec alcool 18€, sans alcool 16€').choix, 'formule');
+  assert.equal(tarif('Tarif : tarifs et fonctionnement habituels du bar').choix, 'habituel');
+  assert.deepEqual(tarif('Tarif : consommation minimum de 80 €'), { choix: 'minimum', montant: '80', texte: '' });
+  assert.deepEqual(tarif('Tarif : 30 € par personne pour le MJ'), { choix: 'autre', montant: '', texte: '30 € par personne pour le MJ' });
+  const r = plain(C.lireDescription('Texte\n\nTarif : formule avec alcool 18 €, sans alcool 16 €'));
+  assert.equal(r.descriptionPublique, 'Texte');
+});
+
+test('Places : un format inconnu reste dans la description', () => {
+  const r = plain(C.lireDescription('Venez !\nPlaces : 8 Discord / 8 Vibes'));
+  assert.equal(r.descriptionPublique, 'Venez !\nPlaces : 8 Discord / 8 Vibes');
+  assert.equal(r.places.gerer, false);
+  assert.deepEqual(plain(C.lireDescription('Places : 15, inscription recommandée')).places,
+    { gerer: true, nombre: '15', inscription: 'recommandee', complet: false });
 });
 
 test('horaires : soirée classique', () => {

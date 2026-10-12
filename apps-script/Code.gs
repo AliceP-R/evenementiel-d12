@@ -163,7 +163,16 @@ function valider_(f) {
     const url = ((f.canaux || {})[c] || '').trim();
     if (url && !/^https?:\/\/\S+$/.test(url)) erreurs.push(`le lien ${NOMS_CANAUX[c]} (il doit commencer par https://)`);
   });
-  if (f.colorId && !CATEGORIES[f.calendrier].some(c => c.colorId === String(f.colorId))) erreurs.push('la catégorie');
+  const categorie = CATEGORIES[f.calendrier].find(c => c.colorId === String(f.colorId || ''));
+  if (f.colorId && !categorie) erreurs.push('la catégorie');
+  const places = f.places || {};
+  if (places.gerer && !places.complet && !/^[1-9]\d{0,2}$/.test(String(places.nombre || '').trim())) {
+    erreurs.push('le nombre de places (ou cocher « Complet »)');
+  }
+  const tarif = f.tarif || {};
+  if (!tarif.choix && categorie && categorie.tarifObligatoire) erreurs.push(`le tarif (obligatoire pour ${categorie.nom})`);
+  if (tarif.choix === 'minimum' && !/^\d+(?:[.,]\d+)?$/.test(String(tarif.montant || '').trim())) erreurs.push('le montant de la consommation minimum');
+  if (tarif.choix === 'autre' && !String(tarif.texte || '').trim()) erreurs.push('le texte du tarif');
   champsACompleter(f).forEach(champ => erreurs.push(`${champ} (il reste « ${A_COMPLETER} »)`));
   if (erreurs.length) throw new Error('À vérifier : ' + erreurs.join(', ') + '.');
 }

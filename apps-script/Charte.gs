@@ -17,7 +17,11 @@ const LISTES_CHARTE = {
       ['id', 'Identifiant'], ['nom', 'Nom du modèle'], ['calendrier', 'Calendrier'], ['colorId', 'Catégorie (couleur)'],
       ['titre', 'Titre'], ['heureDebut', 'Début'], ['heureFin', 'Fin'], ['visibilite', 'Visibilité'],
       ['descriptionPublique', 'Description publique'], ['inscriptionMode', 'Inscription'], ['inscriptionUrl', "Lien d'inscription"],
-      ['vibes', 'Vibes'], ['meetup', 'Meetup'], ['discord', 'Discord'], ['instagram', 'Instagram'], ['notesInternes', 'Notes internes']
+      ['vibes', 'Vibes'], ['meetup', 'Meetup'], ['discord', 'Discord'], ['instagram', 'Instagram'], ['notesInternes', 'Notes internes'],
+      // Ajoutées après les autres : un Sheet déjà créé garde ses colonnes, les nouvelles s'ajoutent à droite
+      ['placesGerer', 'Gérer les inscriptions (oui)'], ['placesNombre', 'Places'], ['placesInscription', 'Inscription obligatoire / recommandee'],
+      ['placesComplet', 'Complet (oui)'], ['tarifChoix', 'Tarif (formule, habituel, minimum, autre)'], ['tarifMontant', 'Montant minimum'],
+      ['tarifTexte', 'Tarif (texte si autre)']
     ]
   },
   textes: {
@@ -41,40 +45,42 @@ const TEXTES_DE_LA_CHARTE = {
   sad: "Passez une soirée jeux & puzzles en bonne compagnie : une table ouverte du dimanche pour fuir la déprime !",
   reservationClient: "📌 Cette session est réservée par un client.",
   creneauLibre: "Ce créneau est ouvert à la réservation pour votre table de jeu de rôle !\n\n⚠️ Ne passez pas par le système de réservation classique du bar : envoyez-nous un message sur Discord, Instagram ou par mail.",
-  vadrouilles: "Vadrouilles & Magie : comédien·nes, auteur·ices et MJ professionnel·les qui créent des parties de JDR sur mesure, avec des scénarios uniques. Spécialistes de Donjons & Dragons et de Cyberpunk RED, avec un focus sur l'immersion, l'interprétation et les backgrounds.",
-  tarifFormule: 'Tarif : formule avec alcool 18 €, sans alcool 16 €',
-  tarifHabituel: 'Tarif : tarifs et fonctionnement habituels du bar',
-  tarifMinimum: 'Tarif : consommation minimum de 90 €',
-  tarifVadrouilles: 'Tarif : 30 € par personne pour le MJ + consommation minimum de 90 € par table'
+  vadrouilles: "Vadrouilles & Magie : comédien·nes, auteur·ices et MJ professionnel·les qui créent des parties de JDR sur mesure, avec des scénarios uniques. Spécialistes de Donjons & Dragons et de Cyberpunk RED, avec un focus sur l'immersion, l'interprétation et les backgrounds."
 };
 
-const PRESENTATION_A_COMPLETER = A_COMPLETER.replace(']', ' : présentation du jeu en 2 ou 3 phrases]');
+const presentationACompleter = quoi => A_COMPLETER.replace(']', ' : ' + quoi + ']');
 
+// Places et Tarif : champs du formulaire (l'outil écrit les lignes), cf. charte § 2.4 et 2.6
 const MODELES_DE_LA_CHARTE = (() => {
   const T = TEXTES_DE_LA_CHARTE;
-  const bloc = (...lignes) => lignes.filter(Boolean).join('\n');
-  const m = (nom, calendrier, colorId, titre, descriptionPublique, notesInternes, visibilite) =>
-    ({ nom, calendrier, colorId, titre, descriptionPublique, notesInternes: notesInternes || '', visibilite: visibilite || 'publique' });
+  const m = (nom, calendrier, colorId, titre, descriptionPublique, options) => Object.assign({
+    nom, calendrier, colorId, titre, descriptionPublique, notesInternes: '', visibilite: 'publique',
+    placesGerer: '', placesNombre: '', placesInscription: 'obligatoire', tarifChoix: '', tarifMontant: '', tarifTexte: ''
+  }, options);
+  const inscrits = (nombre, mode) => ({ placesGerer: 'oui', placesNombre: nombre || '', placesInscription: mode || 'obligatoire' });
+  const tablesOuvertes = Object.assign(inscrits('15', 'recommandee'), { tarifChoix: 'habituel' });
   return [
-    m('Soirée BOTC', 'jds', '3', 'Blood on the Clocktower - Débutant·es', T.botc + '\n\n' +
-      bloc('Scénario : Trouble Brewing', 'Animé par : ' + A_COMPLETER, 'Places : 12, inscription obligatoire', T.tarifFormule)),
-    m('Tables Ouvertes du Lundi', 'jds', '5', 'Tables Ouvertes du Lundi', T.tablesOuvertes + '\n\n' +
-      bloc('Places : 15, inscription recommandée', T.tarifHabituel)),
-    m('Tables Ouvertes du Jeudi', 'jds', '5', 'Tables Ouvertes du Jeudi', T.tablesOuvertes + '\n\n' +
-      bloc('Places : 15, inscription recommandée', T.tarifHabituel)),
-    m('S.A.D du Dimanche', 'jds', '5', 'S.A.D : Soirée Anti-Déprime du Dimanche', T.sad + '\n\n' + T.tablesOuvertes + '\n\n' +
-      bloc('Places : 15, inscription recommandée', T.tarifHabituel)),
-    m('Soirée Découverte', 'jds', '7', 'Soirée Découverte - ' + A_COMPLETER, PRESENTATION_A_COMPLETER + '\n\n' +
-      bloc('Places : ' + A_COMPLETER + ', inscription obligatoire', T.tarifHabituel)),
-    m('Réservation Client', 'jdr', '2', 'Réservation Client', T.reservationClient, 'Contact : ' + A_COMPLETER),
-    m('Créneau Libre', 'jdr', '3', 'Créneau Libre', T.creneauLibre + '\n\n' + T.tarifMinimum),
-    m('Vadrouilles & Magie', 'jdr', '4', 'Vadrouilles & Magie', T.vadrouilles + '\n\n' +
-      bloc('Places : ' + A_COMPLETER + ', inscription obligatoire', T.tarifVadrouilles)),
-    m('Initiation / One-shot', 'jdr', '5', 'Initiation ' + A_COMPLETER, PRESENTATION_A_COMPLETER + '\n\n' +
-      bloc('Animé par : ' + A_COMPLETER, 'Places : ' + A_COMPLETER + ', inscription obligatoire', T.tarifMinimum)),
-    m('Campagne', 'jdr', '8', 'Campagne ' + A_COMPLETER, A_COMPLETER.replace(']', ' : la campagne en 1 phrase (jeu, fréquence)]') + '\n\n' +
-      bloc('Animé par : ' + A_COMPLETER, 'Places : ' + A_COMPLETER)),
-    m('Privatisation', 'jds', '', 'Privatisation - ' + A_COMPLETER, '', 'Contact : ' + A_COMPLETER, 'privee')
+    m('Soirée BOTC', 'jds', '3', 'Blood on the Clocktower - Débutant·es',
+      T.botc + '\n\nScénario : Trouble Brewing\nAnimé par : ' + A_COMPLETER, Object.assign(inscrits('12'), { tarifChoix: 'formule' })),
+    m('Tables Ouvertes du Lundi', 'jds', '5', 'Tables Ouvertes du Lundi', T.tablesOuvertes, tablesOuvertes),
+    m('Tables Ouvertes du Jeudi', 'jds', '5', 'Tables Ouvertes du Jeudi', T.tablesOuvertes, tablesOuvertes),
+    m('S.A.D du Dimanche', 'jds', '5', 'S.A.D : Soirée Anti-Déprime du Dimanche', T.sad + '\n\n' + T.tablesOuvertes, tablesOuvertes),
+    m('Soirée Découverte', 'jds', '7', 'Soirée Découverte - ' + A_COMPLETER,
+      presentationACompleter('présentation du jeu en 2 ou 3 phrases'), Object.assign(inscrits(), { tarifChoix: 'habituel' })),
+    m('Réservation Client', 'jdr', '2', 'Réservation Client', T.reservationClient, { notesInternes: 'Contact : ' + A_COMPLETER }),
+    m('Créneau Libre', 'jdr', '3', 'Créneau Libre', T.creneauLibre, { tarifChoix: 'minimum', tarifMontant: '90' }),
+    m('Vadrouilles & Magie', 'jdr', '4', 'Vadrouilles & Magie', T.vadrouilles, Object.assign(inscrits(), {
+      tarifChoix: 'autre', tarifTexte: '30 € par personne pour le MJ + consommation minimum de 90 € par table'
+    })),
+    m('Initiation / One-shot', 'jdr', '5', 'Initiation ' + A_COMPLETER,
+      presentationACompleter('présentation du jeu en 2 ou 3 phrases') + '\n\nAnimé par : ' + A_COMPLETER,
+      Object.assign(inscrits(), { tarifChoix: 'minimum', tarifMontant: '90' })),
+    m('Campagne', 'jdr', '8', 'Campagne ' + A_COMPLETER,
+      presentationACompleter('la campagne en 1 phrase (jeu, fréquence)') + '\n\nAnimé par : ' + A_COMPLETER, inscrits()),
+    m('Évènement externe', 'jds', '9', A_COMPLETER,
+      presentationACompleter('la soirée et qui l\'organise, en 1 à 3 phrases') + '\n\nOrganisé par : ' + A_COMPLETER,
+      { notesInternes: 'Contact : ' + A_COMPLETER }),
+    m('Privatisation', 'jds', '', 'Privatisation - ' + A_COMPLETER, '', { notesInternes: 'Contact : ' + A_COMPLETER, visibilite: 'privee' })
   ];
 })();
 
@@ -84,11 +90,7 @@ const TEXTES_TYPES_DE_LA_CHARTE = [
   ['Accroche S.A.D', TEXTES_DE_LA_CHARTE.sad],
   ['Présentation Vadrouilles & Magie', TEXTES_DE_LA_CHARTE.vadrouilles],
   ['Réservation Client', TEXTES_DE_LA_CHARTE.reservationClient],
-  ['Créneau Libre : avertissement', TEXTES_DE_LA_CHARTE.creneauLibre],
-  ['Tarif : formule', TEXTES_DE_LA_CHARTE.tarifFormule],
-  ['Tarif : habituel du bar', TEXTES_DE_LA_CHARTE.tarifHabituel],
-  ['Tarif : consommation minimum 90 €', TEXTES_DE_LA_CHARTE.tarifMinimum],
-  ['Tarif : Vadrouilles & Magie', TEXTES_DE_LA_CHARTE.tarifVadrouilles]
+  ['Créneau Libre : avertissement', TEXTES_DE_LA_CHARTE.creneauLibre]
 ].map(([nom, texte]) => ({ nom, texte }));
 
 // ---------- Fonctions pures (testées avec Node) ----------
@@ -150,6 +152,15 @@ function validerElementCharte(liste, element, autres) {
     CANAUX.forEach(c => {
       if (propre[c] && !/^https?:\/\/\S+$/.test(propre[c])) erreurs.push(`le lien ${NOMS_CANAUX[c]} (il doit commencer par https://)`);
     });
+    // Places et tarif : un modèle peut laisser le nombre ou le montant vides (à remplir sur chaque évènement)
+    propre.placesGerer = propre.placesGerer === 'oui' ? 'oui' : '';
+    propre.placesComplet = propre.placesGerer && propre.placesComplet === 'oui' ? 'oui' : '';
+    if (propre.placesInscription !== 'recommandee') propre.placesInscription = 'obligatoire';
+    if (propre.placesNombre && !/^[1-9]\d{0,2}$/.test(propre.placesNombre)) erreurs.push('le nombre de places');
+    if (['formule', 'habituel', 'minimum', 'autre'].indexOf(propre.tarifChoix) === -1) propre.tarifChoix = '';
+    if (propre.tarifChoix !== 'minimum') propre.tarifMontant = '';
+    else if (propre.tarifMontant && !/^\d+(?:[.,]\d+)?$/.test(propre.tarifMontant)) erreurs.push('le montant de la consommation minimum');
+    if (propre.tarifChoix !== 'autre') propre.tarifTexte = '';
   }
 
   if (erreurs.length) throw new Error('À vérifier : ' + erreurs.filter((e, i) => erreurs.indexOf(e) === i).join(', ') + '.');
@@ -253,9 +264,10 @@ function ongletCharte_(classeur, liste) {
     // Le classeur neuf contient une « Feuille 1 » vide : on la réutilise
     const vide = classeur.getSheets().find(f => f.getLastRow() === 0 && !Object.values(LISTES_CHARTE).some(d => d.onglet === f.getName()));
     feuille = vide ? vide.setName(def.onglet) : classeur.insertSheet(def.onglet);
-    feuille.getRange(1, 1, 1, def.colonnes.length).setValues([def.colonnes.map(c => c[1])]).setFontWeight('bold');
     feuille.setFrozenRows(1);
   }
+  // En-têtes réécrits à chaque fois : un Sheet créé avant l'ajout d'une colonne la reçoit aussi
+  feuille.getRange(1, 1, 1, def.colonnes.length).setValues([def.colonnes.map(c => c[1])]).setFontWeight('bold');
   return feuille;
 }
 

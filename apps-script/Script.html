@@ -108,6 +108,8 @@
           ev.serieId && el('span', { class: 'badge' }, '🔁 Série'),
           ev.inscription.mode === 'externe' && el('span', { class: 'badge' }, '🔗 Inscription externe'),
           ev.inscription.mode === 'aucune' && el('span', { class: 'badge' }, '🚫 Pas d\'inscription'),
+          ev.places.gerer && el('span', { class: 'badge' }, ev.places.complet ? '🎟️ Complet' : '🎟️ ' + ev.places.nombre + ' places'),
+          !ev.tarif.choix && (categorieDe(ev) || {}).tarifObligatoire && el('span', { class: 'badge' }, '⚠️ Tarif manquant'),
           ev.notesInternes && el('span', { class: 'badge', title: ev.notesInternes }, '🔐 Notes internes')
         )
       ),
@@ -141,6 +143,18 @@
     $('#libelle-normal').textContent = cat && cat.bouton
       ? 'Bouton habituel : ' + boutons[cat.bouton]
       : 'Comportement habituel de la catégorie (ici : aucun bouton)';
+    $('#aide-tarif').textContent = cat && cat.tarifObligatoire ? 'Obligatoire pour ' + cat.nom : '';
+  }
+
+  // Nouvel évènement ou modèle : valeurs proposées par la catégorie (charte § 2.4)
+  function appliquerDefautsCategorie() {
+    if (etat.enCours && etat.enCours.id) return;
+    const cat = (etat.categories[form.calendrier.value] || []).find(c => c.colorId === form.colorId.value) || {};
+    form.placesGerer.checked = !!cat.inscriptions;
+    form.placesNombre.value = cat.places || '';
+    form.placesInscription.value = cat.modePlaces || 'obligatoire';
+    form.placesComplet.checked = false;
+    majVisibiliteChamps();
   }
 
   function majVisibiliteChamps() {
@@ -154,6 +168,11 @@
     $('#alerte-mardi').hidden = modele || !form.date.value || versDate(form.date.value).getDay() !== 2;
     const freq = form.frequence.value;
     $('#bloc-fin-serie').hidden = freq === 'aucune' || freq === 'autre';
+    $('#bloc-places').hidden = !form.placesGerer.checked;
+    form.placesNombre.disabled = form.placesInscription.disabled = form.placesComplet.checked;
+    $('#aide-complet').hidden = !form.placesComplet.checked;
+    $('#bloc-tarif-montant').hidden = form.tarifChoix.value !== 'minimum';
+    $('#bloc-tarif-texte').hidden = form.tarifChoix.value !== 'autre';
   }
 
   // Ouvre le formulaire. ev = valeurs de départ (évènement existant, copie, nouveau ou modèle).
@@ -202,6 +221,15 @@
     const canaux = ev.canaux || {};
     CANAUX.forEach(c => { form['canal-' + c].value = canaux[c] || ''; });
     $('#bloc-canaux').open = Object.values(canaux).some(Boolean);
+    const places = ev.places || {};
+    form.placesGerer.checked = !!places.gerer;
+    form.placesNombre.value = places.nombre || '';
+    form.placesInscription.value = places.inscription || 'obligatoire';
+    form.placesComplet.checked = !!places.complet;
+    const tarif = ev.tarif || {};
+    form.tarifChoix.value = tarif.choix || '';
+    form.tarifMontant.value = tarif.montant || '';
+    form.tarifTexte.value = tarif.texte || '';
 
     const rec = ev.recurrence || { frequence: 'aucune', fin: '' };
     form.querySelector('[name=frequence] option[value=autre]').hidden = rec.frequence !== 'autre';
@@ -236,6 +264,13 @@
         discord: form['canal-discord'].value,
         instagram: form['canal-instagram'].value
       },
+      places: {
+        gerer: form.placesGerer.checked,
+        nombre: form.placesNombre.value,
+        inscription: form.placesInscription.value,
+        complet: form.placesComplet.checked
+      },
+      tarif: { choix: form.tarifChoix.value, montant: form.tarifMontant.value, texte: form.tarifTexte.value },
       recurrence: { frequence: form.frequence.value, fin: form.finSerie.value }
     };
   }
@@ -277,6 +312,7 @@
     const premier = dateStr(etat.annee, etat.mois, 1);
     const date = ajd.slice(0, 7) === premier.slice(0, 7) ? ajd : premier;
     ouvrirFormulaire({ calendrier: etat.filtre === 'jdr' ? 'jdr' : 'jds', date }, 'Nouvel évènement', '', { choixModele: true });
+    appliquerDefautsCategorie();
   }
 
   function dupliquer(ev) {
@@ -360,7 +396,9 @@
       id: m.id, nom: m.nom, calendrier: m.calendrier || 'jds', colorId: m.colorId, titre: m.titre,
       heureDebut: m.heureDebut, heureFin: m.heureFin, visibilite: m.visibilite,
       descriptionPublique: m.descriptionPublique, notesInternes: m.notesInternes,
-      inscription: { mode: m.inscriptionMode || 'normal', url: m.inscriptionUrl || '' }, canaux
+      inscription: { mode: m.inscriptionMode || 'normal', url: m.inscriptionUrl || '' }, canaux,
+      places: { gerer: m.placesGerer === 'oui', nombre: m.placesNombre, inscription: m.placesInscription || 'obligatoire', complet: m.placesComplet === 'oui' },
+      tarif: { choix: m.tarifChoix, montant: m.tarifMontant, texte: m.tarifTexte }
     };
   }
 
@@ -369,7 +407,10 @@
       id: id || '', nom, calendrier: f.calendrier, colorId: f.colorId, titre: f.titre,
       heureDebut: f.heureDebut, heureFin: f.heureFin, visibilite: f.visibilite,
       descriptionPublique: f.descriptionPublique, notesInternes: f.notesInternes,
-      inscriptionMode: f.inscription.mode, inscriptionUrl: f.inscription.url
+      inscriptionMode: f.inscription.mode, inscriptionUrl: f.inscription.url,
+      placesGerer: f.places.gerer ? 'oui' : '', placesNombre: f.places.nombre, placesInscription: f.places.inscription,
+      placesComplet: f.places.complet ? 'oui' : '',
+      tarifChoix: f.tarif.choix, tarifMontant: f.tarif.montant, tarifTexte: f.tarif.texte
     };
     CANAUX.forEach(c => { m[c] = f.canaux[c]; });
     return m;
@@ -440,6 +481,7 @@
   function nouveauModele() {
     etat.portee = null;
     ouvrirFormulaire({ calendrier: etat.filtre === 'jdr' ? 'jdr' : 'jds' }, 'Nouveau modèle', '', { mode: 'modele' });
+    appliquerDefautsCategorie();
   }
 
   function modifierModele(m) {
@@ -562,8 +604,8 @@
   $('#inserer-texte').addEventListener('change', insererTexte);
   $('#suppr-annuler').addEventListener('click', () => $('#dlg-suppr').close());
   form.addEventListener('submit', enregistrer);
-  form.calendrier.addEventListener('change', () => remplirCategories(form.calendrier.value, ''));
-  form.colorId.addEventListener('change', majAideCategorie);
+  form.calendrier.addEventListener('change', () => { remplirCategories(form.calendrier.value, ''); appliquerDefautsCategorie(); });
+  form.colorId.addEventListener('change', () => { majAideCategorie(); appliquerDefautsCategorie(); });
   form.addEventListener('change', majVisibiliteChamps);
 
   chargerMois().then(chargerCharte); // catégories d'abord : la charte les affiche
