@@ -27,7 +27,83 @@ const LISTES_CHARTE = {
   }
 };
 
+// Repère à laisser dans un modèle là où il faut écrire quelque chose :
+// l'outil refuse d'enregistrer un évènement tant qu'il en reste un (cf. docs/formats-descriptions.md § 4).
+const A_COMPLETER = '[à compléter]';
+const REPERE_A_COMPLETER = /\[\s*à compléter[^\]]*\]/i;
+
+// Modèles et textes types de départ, tirés de docs/formats-descriptions.md (§ 3).
+// Bouton « 📥 Ajouter les modèles de la charte » : ajoute ceux qui manquent (même nom), sans toucher aux autres.
+// Une fois ajoutés, ils se modifient dans l'outil comme les autres.
+const TEXTES_DE_LA_CHARTE = {
+  botc: "Un jeu de mystère orchestré par le Conteur, où chacun·e incarne un rôle unique dans le village de Ravenswood, hanté par un démon. Pouvoirs secrets la nuit, votes et bluff le jour. Même éliminé·e, vous influencez encore la partie !",
+  tablesOuvertes: "Les tables ouvertes sont des espaces de jeu inclusifs où chacun·e est bienvenu·e. Découvrez de nouvelles connaissances, de nouveaux univers, de nouvelles mécaniques, de nouveaux jeux et créez de nouveaux liens dans une ambiance bienveillante et sans prise de tête ! Pensez à vous inscrire, pour que personne ne se retrouve isolé·e !",
+  sad: "Passez une soirée jeux & puzzles en bonne compagnie : une table ouverte du dimanche pour fuir la déprime !",
+  reservationClient: "📌 Cette session est réservée par un client.",
+  creneauLibre: "Ce créneau est ouvert à la réservation pour votre table de jeu de rôle !\n\n⚠️ Ne passez pas par le système de réservation classique du bar : envoyez-nous un message sur Discord, Instagram ou par mail.",
+  vadrouilles: "Vadrouilles & Magie : comédien·nes, auteur·ices et MJ professionnel·les qui créent des parties de JDR sur mesure, avec des scénarios uniques. Spécialistes de Donjons & Dragons et de Cyberpunk RED, avec un focus sur l'immersion, l'interprétation et les backgrounds.",
+  tarifFormule: 'Tarif : formule avec alcool 18 €, sans alcool 16 €',
+  tarifHabituel: 'Tarif : tarifs et fonctionnement habituels du bar',
+  tarifMinimum: 'Tarif : consommation minimum de 90 €',
+  tarifVadrouilles: 'Tarif : 30 € par personne pour le MJ + consommation minimum de 90 € par table'
+};
+
+const PRESENTATION_A_COMPLETER = A_COMPLETER.replace(']', ' : présentation du jeu en 2 ou 3 phrases]');
+
+const MODELES_DE_LA_CHARTE = (() => {
+  const T = TEXTES_DE_LA_CHARTE;
+  const bloc = (...lignes) => lignes.filter(Boolean).join('\n');
+  const m = (nom, calendrier, colorId, titre, descriptionPublique, notesInternes, visibilite) =>
+    ({ nom, calendrier, colorId, titre, descriptionPublique, notesInternes: notesInternes || '', visibilite: visibilite || 'publique' });
+  return [
+    m('Soirée BOTC', 'jds', '3', 'Blood on the Clocktower - Débutant·es', T.botc + '\n\n' +
+      bloc('Scénario : Trouble Brewing', 'Animé par : ' + A_COMPLETER, 'Places : 12, inscription obligatoire', T.tarifFormule)),
+    m('Tables Ouvertes du Lundi', 'jds', '5', 'Tables Ouvertes du Lundi', T.tablesOuvertes + '\n\n' +
+      bloc('Places : 15, inscription recommandée', T.tarifHabituel)),
+    m('Tables Ouvertes du Jeudi', 'jds', '5', 'Tables Ouvertes du Jeudi', T.tablesOuvertes + '\n\n' +
+      bloc('Places : 15, inscription recommandée', T.tarifHabituel)),
+    m('S.A.D du Dimanche', 'jds', '5', 'S.A.D : Soirée Anti-Déprime du Dimanche', T.sad + '\n\n' + T.tablesOuvertes + '\n\n' +
+      bloc('Places : 15, inscription recommandée', T.tarifHabituel)),
+    m('Soirée Découverte', 'jds', '7', 'Soirée Découverte - ' + A_COMPLETER, PRESENTATION_A_COMPLETER + '\n\n' +
+      bloc('Places : ' + A_COMPLETER + ', inscription obligatoire', T.tarifHabituel)),
+    m('Réservation Client', 'jdr', '2', 'Réservation Client', T.reservationClient, 'Contact : ' + A_COMPLETER),
+    m('Créneau Libre', 'jdr', '3', 'Créneau Libre', T.creneauLibre + '\n\n' + T.tarifMinimum),
+    m('Vadrouilles & Magie', 'jdr', '4', 'Vadrouilles & Magie', T.vadrouilles + '\n\n' +
+      bloc('Places : ' + A_COMPLETER + ', inscription obligatoire', T.tarifVadrouilles)),
+    m('Initiation / One-shot', 'jdr', '5', 'Initiation ' + A_COMPLETER, PRESENTATION_A_COMPLETER + '\n\n' +
+      bloc('Animé par : ' + A_COMPLETER, 'Places : ' + A_COMPLETER + ', inscription obligatoire', T.tarifMinimum)),
+    m('Campagne', 'jdr', '8', 'Campagne ' + A_COMPLETER, A_COMPLETER.replace(']', ' : la campagne en 1 phrase (jeu, fréquence)]') + '\n\n' +
+      bloc('Animé par : ' + A_COMPLETER, 'Places : ' + A_COMPLETER)),
+    m('Privatisation', 'jds', '', 'Privatisation - ' + A_COMPLETER, '', 'Contact : ' + A_COMPLETER, 'privee')
+  ];
+})();
+
+const TEXTES_TYPES_DE_LA_CHARTE = [
+  ['Présentation BOTC', TEXTES_DE_LA_CHARTE.botc],
+  ['Présentation Tables Ouvertes', TEXTES_DE_LA_CHARTE.tablesOuvertes],
+  ['Accroche S.A.D', TEXTES_DE_LA_CHARTE.sad],
+  ['Présentation Vadrouilles & Magie', TEXTES_DE_LA_CHARTE.vadrouilles],
+  ['Réservation Client', TEXTES_DE_LA_CHARTE.reservationClient],
+  ['Créneau Libre : avertissement', TEXTES_DE_LA_CHARTE.creneauLibre],
+  ['Tarif : formule', TEXTES_DE_LA_CHARTE.tarifFormule],
+  ['Tarif : habituel du bar', TEXTES_DE_LA_CHARTE.tarifHabituel],
+  ['Tarif : consommation minimum 90 €', TEXTES_DE_LA_CHARTE.tarifMinimum],
+  ['Tarif : Vadrouilles & Magie', TEXTES_DE_LA_CHARTE.tarifVadrouilles]
+].map(([nom, texte]) => ({ nom, texte }));
+
 // ---------- Fonctions pures (testées avec Node) ----------
+
+// Champs d'un évènement où il reste un repère « [à compléter] » (noms lisibles, liste vide si tout est rempli)
+function champsACompleter(champs) {
+  const noms = { titre: 'le titre', descriptionPublique: 'la description publique', notesInternes: 'les notes internes' };
+  return Object.keys(noms).filter(cle => REPERE_A_COMPLETER.test(champs[cle] || '')).map(cle => noms[cle]);
+}
+
+// Éléments de départ à ajouter : ceux dont le nom n'existe pas encore dans la liste
+function elementsManquants(depart, existants) {
+  const noms = existants.map(e => e.nom.toLowerCase());
+  return depart.filter(e => noms.indexOf(e.nom.toLowerCase()) === -1);
+}
 
 function listeCharte(liste) {
   const def = LISTES_CHARTE[liste];
@@ -123,6 +199,28 @@ function supprimerElementCharte(liste, id) {
     ecrireListeCharte_(classeur, liste, elements.filter(e => e.id !== id));
     journaliser_(email, `Charte : suppression ${listeCharte(liste).nom}`, 'charte', element.nom, '', id);
     return lireListeCharte_(classeur, liste);
+  });
+}
+
+// Ajoute les modèles et textes types de la charte qui manquent. Renvoie les deux listes et le nombre ajouté.
+function ajouterModelesDeLaCharte() {
+  const email = verifierAcces_();
+  return avecVerrou_(() => {
+    const classeur = classeurCharte_(true);
+    const resultat = { ajoutes: 0 };
+    [['modeles', MODELES_DE_LA_CHARTE], ['textes', TEXTES_TYPES_DE_LA_CHARTE]].forEach(([liste, depart]) => {
+      const elements = lireListeCharte_(classeur, liste);
+      const nouveaux = elementsManquants(depart, elements).map(e => {
+        const propre = validerElementCharte(liste, e, elements);
+        propre.id = Utilities.getUuid().slice(0, 8);
+        return propre;
+      });
+      if (nouveaux.length) ecrireListeCharte_(classeur, liste, elements.concat(nouveaux));
+      resultat.ajoutes += nouveaux.length;
+      resultat[liste] = lireListeCharte_(classeur, liste);
+    });
+    if (resultat.ajoutes) journaliser_(email, 'Charte : ajout des modèles de départ', 'charte', `${resultat.ajoutes} élément(s)`, '', '');
+    return resultat;
   });
 }
 

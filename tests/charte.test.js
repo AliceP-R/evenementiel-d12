@@ -75,3 +75,29 @@ test('un modèle sans catégorie ni horaires est accepté', () => {
   assert.equal(m.visibilite, 'privee');
   assert.equal(m.inscriptionMode, 'normal');
 });
+
+test('les modèles et textes de départ respectent la validation de la charte', () => {
+  const modeles = plain(vm.runInContext('MODELES_DE_LA_CHARTE', ctx));
+  const textes = plain(vm.runInContext('TEXTES_TYPES_DE_LA_CHARTE', ctx));
+  assert.ok(modeles.length >= 10);
+  const deja = [];
+  modeles.forEach(m => deja.push(C.validerElementCharte('modeles', m, deja)));
+  const dejaT = [];
+  textes.forEach(t => dejaT.push(C.validerElementCharte('textes', t, dejaT)));
+  // Charte § 2.2 : plus de ligne Instagram ni d'« Inscription : aucune » dans les modèles
+  modeles.forEach(m => assert.doesNotMatch(m.descriptionPublique, /^(Instagram|Inscription)\s*:/m, m.nom));
+});
+
+test('champsACompleter repère les « [à compléter] » restés dans un évènement', () => {
+  assert.deepEqual(plain(C.champsACompleter({ titre: 'Initiation Daggerheart', descriptionPublique: 'Texte', notesInternes: '' })), []);
+  assert.deepEqual(plain(C.champsACompleter({
+    titre: 'Soirée Découverte - [à compléter]',
+    descriptionPublique: '[À compléter : présentation du jeu en 2 ou 3 phrases]',
+    notesInternes: 'Contact : [ à compléter ]'
+  })), ['le titre', 'la description publique', 'les notes internes']);
+});
+
+test('elementsManquants n\'ajoute que les noms absents', () => {
+  const depart = [{ nom: 'Soirée BOTC' }, { nom: 'Créneau Libre' }];
+  assert.deepEqual(plain(C.elementsManquants(depart, [{ nom: 'soirée botc' }])), [{ nom: 'Créneau Libre' }]);
+});

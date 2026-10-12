@@ -1,6 +1,6 @@
 # Format des titres et descriptions d'évènements
 
-*Proposition à relire · octobre 2026 · rien n'est encore appliqué dans l'outil ni dans Google Agenda*
+*Proposition à relire · octobre 2026 · seuls les modèles et le repère « [à compléter] » sont dans l'outil (cf. § 4)*
 
 Cette charte fixe une seule façon d'écrire le titre et la description de chaque type d'évènement. Elle part de l'état
 des lieux des évènements d'août à décembre 2026 (cf. § 6).
@@ -316,8 +316,12 @@ qui ni pour quoi. (Un évènement privé du calendrier JDR ne bloquerait pas la 
 
 Rien n'est encore fait. Pistes possibles une fois la charte validée :
 
-1. Préremplir la description avec le modèle de la catégorie choisie, sans écraser un texte déjà saisi.
-2. Refuser l'enregistrement tant qu'un repère « [à compléter] » reste dans la description publique.
+1. ✅ Préremplir le formulaire avec un modèle : fait avec la **Charte** de l'outil (bouton « 📥 Ajouter les modèles de
+   la charte » : un modèle par catégorie du § 3 et les textes types). On choisit le modèle en haut de « Nouvel
+   évènement » ; les modèles restent modifiables dans l'outil. Pas encore prévus : Ligue Ludique (routine Claude),
+   Évènement externe (catégorie à créer), Fermeture (journée entière).
+2. ✅ Refuser l'enregistrement tant qu'un repère « [à compléter] » reste dans le titre, la description publique ou les
+   notes internes.
 3. Retirer le champ Instagram.
 4. Ajouter la catégorie « Évènement externe ».
 5. Choix Tarif sur tous les évènements : Formule, Tarifs habituels, Consommation minimum (montant), Autre (champ de

@@ -164,6 +164,7 @@ function valider_(f) {
     if (url && !/^https?:\/\/\S+$/.test(url)) erreurs.push(`le lien ${NOMS_CANAUX[c]} (il doit commencer par https://)`);
   });
   if (f.colorId && !CATEGORIES[f.calendrier].some(c => c.colorId === String(f.colorId))) erreurs.push('la catégorie');
+  champsACompleter(f).forEach(champ => erreurs.push(`${champ} (il reste « ${A_COMPLETER} »)`));
   if (erreurs.length) throw new Error('À vérifier : ' + erreurs.join(', ') + '.');
 }
 

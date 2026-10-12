@@ -516,6 +516,19 @@
       }));
   }
 
+  function ajouterModelesDeLaCharte() {
+    const bouton = $('#btn-modeles-charte');
+    bouton.disabled = true;
+    $('#charte-statut').textContent = 'Ajout…';
+    appel('ajouterModelesDeLaCharte')
+      .then(r => {
+        etat.charte = { modeles: r.modeles, textes: r.textes };
+        majCharte(r.ajoutes ? `✅ ${r.ajoutes} modèle(s) ou texte(s) ajouté(s).` : 'Tout est déjà là : rien à ajouter.');
+      })
+      .catch(e => { $('#charte-statut').textContent = '❌ ' + e.message; })
+      .finally(() => { bouton.disabled = false; });
+  }
+
   // ---------- Branchements ----------
   $('#mois-precedent').addEventListener('click', () => {
     if (--etat.mois < 0) { etat.mois = 11; etat.annee--; }
@@ -542,6 +555,7 @@
   $('#charte-fermer').addEventListener('click', () => $('#dlg-charte').close());
   $('#btn-nouveau-modele').addEventListener('click', nouveauModele);
   $('#btn-nouveau-texte').addEventListener('click', () => ouvrirTexte(null));
+  $('#btn-modeles-charte').addEventListener('click', ajouterModelesDeLaCharte);
   $('#texte-annuler').addEventListener('click', () => $('#dlg-texte').close());
   $('#form-texte').addEventListener('submit', enregistrerTexte);
   $('#choix-modele').addEventListener('change', appliquerModele);

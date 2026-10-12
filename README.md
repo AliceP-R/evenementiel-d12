@@ -57,6 +57,10 @@ Bouton **🎨 Charte** en haut de l'outil. Tout le monde peut y modifier, sans t
 - **Textes types** : phrases réutilisables (présentation d'une soirée, mentions, règles…), à insérer dans la
   description avec la liste « ✍️ Insérer un texte type… » sous le champ.
 
+Pour démarrer, **📥 Ajouter les modèles de la charte** crée un modèle par catégorie et les textes types (présentations,
+tarifs) décrits dans [docs/formats-descriptions.md](docs/formats-descriptions.md). Les modèles contiennent des repères
+**[à compléter]** : l'outil refuse d'enregistrer l'évènement tant qu'il en reste un.
+
 Modifier ou supprimer un modèle ne change pas les évènements déjà créés. Chaque changement est noté dans le journal.
 Les modèles sont enregistrés dans un Google Sheet « Au Dé 12 · Charte », créé au premier enregistrement dans le Drive
 du compte qui a déployé (propriété `CHARTE_ID`). Il sert de sauvegarde : on modifie depuis l'outil.
