@@ -20,7 +20,8 @@ https://script.google.com/a/macros/au-de12paris.com/s/AKfycbze5U_fOGKcIdlryhaDd8
 | `apps-script/Corrections.gs` | Correction en lot des évènements existants au format de la charte |
 | `apps-script/Index.html`, `Style.html`, `Script.html` | Interface (HTML, CSS et JS vanilla, sans build) |
 | `apps-script/appsscript.json` | Manifeste : fuseau, service avancé Calendar, accès réservé au domaine |
-| `tests/` | Tests des conventions : `node --test tests/*.test.js` (Node 18 ou plus, aucune dépendance) |
+| `tests/` | Tests des conventions : `node --test tests/*.test.js` ou `npm test` (Node 18 ou plus, aucune dépendance) |
+| `.clasp.json`, `package.json` | Envoi du code vers le projet Apps Script avec clasp (voir « Mettre à jour ») |
 
 ## Mise en service (une seule fois)
 
@@ -45,8 +46,22 @@ https://script.google.com/a/macros/au-de12paris.com/s/AKfycbze5U_fOGKcIdlryhaDd8
 
 ### Mettre à jour après une modification du code
 
-Recoller les fichiers modifiés, puis **Déployer** → **Gérer les déploiements** → ✏️ → Version : **Nouvelle version** →
-Déployer. L'URL ne change pas.
+**Avec clasp (recommandé)** — depuis un ordinateur avec Node 18 ou plus, à la racine du dépôt :
+
+1. Une seule fois :
+   - activer l'API Apps Script sur [script.google.com/home/usersettings](https://script.google.com/home/usersettings)
+     avec le compte `@au-de12paris.com` qui a déployé l'outil ;
+   - `npm install` puis `npm run connexion` (ouvre le navigateur pour se connecter avec ce même compte).
+2. À chaque mise à jour : `git pull` puis `npm run deployer`.
+   Le code du dossier `apps-script/` remplace celui du projet, puis une nouvelle version est publiée sur le déploiement
+   existant : l'URL ne change pas.
+
+`npm run envoyer` remplace seulement le code (pour tester avec **Déployer** → **Tester les déploiements**) sans toucher
+à l'outil utilisé par l'équipe. Le projet visé est dans `.clasp.json` (ID du script), le déploiement dans `package.json`
+(identifiant présent dans l'URL de l'outil).
+
+**À la main** : recoller les fichiers modifiés, puis **Déployer** → **Gérer les déploiements** → ✏️ → Version :
+**Nouvelle version** → Déployer. L'URL ne change pas.
 
 ## Charte : modèles et textes types
 
