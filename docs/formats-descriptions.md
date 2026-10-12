@@ -261,6 +261,8 @@ Marie&TheSapphics, tournoi Machicoulis, etc.
 - Couleur **Myrtille** (`colorId` 9) dans les deux calendriers, **sans bouton**. Si l'organisateur gère les inscriptions, on choisit « Lien d'inscription
   externe » et le site affiche « S'inscrire sur le site de l'organisateur ». En JDR, elle bloque la salle.
 - Titre : le nom de l'évènement tel que l'organisateur l'appelle, sans jauge (`ChessBar`, pas `CHESSBAR x12`).
+- Visibilité : **au choix** (cf. § 3.5). Publique pour une soirée ouverte à tous (Joueurs Anonymes, ChessBar…), privée
+  pour une prestation que la clientèle n'a pas à connaître.
 
 ```
 <Présentation de la soirée et de qui l'organise, en 1 à 3 phrases>
@@ -280,8 +282,22 @@ Myrtille n'est utilisée par aucun évènement d'août à décembre. Créer la c
 Réservé aux **privatisations** et aux **fermetures** :
 
 - Titre : `Privatisation - <Nom>` ou `Fermeture estivale`
-- Visibilité : publique, pour que le site montre le bar ou la salle occupé·e (un évènement privé ne bloque pas la salle).
+- Visibilité : **au choix** (cf. § 3.5).
 - Pas de description publique ; en interne : `Contact :` et `Notes :`.
+
+### 3.5 Visibilité des évènements externes et sans catégorie
+
+Le calendrier sert aussi à l'équipe : une prestation réservée par quelqu'un n'a pas à être visible des client·es. Le champ
+« Visibilité » du formulaire (Public / Privé) reste donc un vrai choix pour ces deux types.
+
+| Visibilité | Sur le site public | « La salle est-elle libre ? » (JDR) |
+|---|---|---|
+| Publique | Affiché, avec sa description publique | La salle est bloquée |
+| Privée | Invisible | **La salle paraît libre** |
+
+À savoir : un évènement privé du calendrier JDR ne bloque pas la salle (règle du site, cf. specs § 4.4). Si une
+prestation privée occupe la salle JDR, le plus sûr est de la créer en **Réservation Client** : la salle est bloquée et le
+public ne voit que « 📌 Cette session est réservée par un client. », sans savoir qui ni pour quoi.
 
 ## 4. Ce que l'outil pourrait reprendre (à décider ensuite)
 
