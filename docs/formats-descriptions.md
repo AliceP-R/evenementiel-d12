@@ -42,9 +42,6 @@ Notes : …
 
 ### 2.1 Lignes publiques
 
-Dans les modèles, `<nombre>` est à remplacer à chaque évènement : seules les Tables Ouvertes (15) et les soirées BOTC
-(12) ont une jauge habituelle.
-
 Les lignes sont toujours dans cet ordre, avec ces libellés exacts. Une ligne sans objet est supprimée, jamais laissée vide.
 
 | Libellé | Contenu | Exemples |
@@ -52,9 +49,8 @@ Les lignes sont toujours dans cet ordre, avec ces libellés exacts. Une ligne sa
 | `Scénario :` | BOTC seulement | `Scénario : Trouble Brewing` |
 | `Niveau :` | Si ce n'est pas évident d'après la catégorie | `Niveau : déconseillé aux débutant·es` · `Niveau : en anglais` |
 | `Animé par :` | Personne ou groupe qui anime (toujours en public, plus « MJ : » ni « Conteur : ») | `Animé par : Martin` · `Animé par : les autrices du jeu` |
-| `Places :` | **Total seulement**, suivi de « inscription obligatoire » ou « inscription recommandée ». La répartition par canal va en interne. | `Places : 15, inscription recommandée` |
-| `Places :` (complet) | `Places : complet`, **et** choisir « Pas d'inscription » pour masquer le bouton | `Places : complet` |
-| `Tarif :` | Cf. § 3 | `Tarif : consommation minimum de 90 € pour le groupe` |
+| `Places :` | **Écrite par l'outil** (cf. § 2.4) : total seulement, ou « complet ». La répartition par canal va en interne. | `Places : 15, inscription recommandée` · `Places : complet` |
+| `Tarif :` | En JDS, **écrite par l'outil** (case Tarif, § 3.1). En JDR, tapée dans la présentation (cf. § 3.2). | `Tarif : consommation minimum de 90 € pour le groupe` |
 
 ### 2.2 Lignes lues par le site (écrites par l'outil)
 
@@ -77,7 +73,32 @@ Mêmes libellés pour tous les types, une ligne sans objet est supprimée (pas d
 | `Inscrit·es :` | Liste des inscrit·es quand l'inscription se fait par message |
 | `Notes :` | Tout le reste |
 
-### 2.4 Typographie
+### 2.4 Places : champs de l'outil
+
+Comme le tarif, la ligne `Places :` n'apparaît plus dans le champ « Description publique » du formulaire. On remplit
+trois champs, et l'outil écrit la ligne dans Google Agenda à l'enregistrement. À l'ouverture d'un évènement, il relit
+la ligne, la retire du texte affiché et remplit les champs.
+
+| Champ du formulaire | Valeur |
+|---|---|
+| Nombre de places | Un nombre, à remplir à chaque fois (seules les Tables Ouvertes, 15, et les soirées BOTC, 12, sont préremplies) |
+| Inscription | « Obligatoire » ou « Recommandée » |
+| Complet | Case à cocher |
+
+| Ce qui est rempli | Ligne écrite | Bouton du site |
+|---|---|---|
+| 12 + Obligatoire | `Places : 12, inscription obligatoire` | Celui de la catégorie |
+| 15 + Recommandée | `Places : 15, inscription recommandée` | Celui de la catégorie |
+| Complet coché | `Places : complet` | **Masqué automatiquement** (l'outil ajoute `Inscription : aucune`) |
+
+| Catégorie | Champs Places |
+|---|---|
+| Soirée BOTC, Tables Ouvertes, Soirée Découverte, Vadrouilles & Magie, OS & Initiation | Obligatoires : nombre et inscription, ou Complet |
+| Campagne Semi-Ouverte | Seulement la case Complet (pas de bouton à masquer) |
+| Évènement externe | Facultatifs ; la jauge réelle va plutôt en interne |
+| Réservation Client, Créneau Libre, Ligue Ludique, sans catégorie | Pas de champs Places |
+
+### 2.5 Typographie
 
 - Prix avec une espace : `18 €`, `90 €`.
 - Écriture inclusive au point médian : `chacun·e`, `joueur·ses`, `auteur·ices`, `débutant·es`.
@@ -124,7 +145,7 @@ Tarif : formule avec alcool 18 €, sans alcool 16 €
 ```
 Les tables ouvertes sont des espaces de jeu inclusifs où chacun·e est bienvenu·e. Découvrez de nouvelles connaissances, de nouveaux univers, de nouvelles mécaniques, de nouveaux jeux et créez de nouveaux liens dans une ambiance bienveillante et sans prise de tête !
 
-Places : 15, inscription recommandée pour que personne ne se retrouve isolé·e
+Places : 15, inscription recommandée
 Tarif : tarifs et fonctionnement habituels du bar
 ```
 
@@ -268,6 +289,7 @@ Rien n'est encore fait. Pistes possibles une fois la charte validée :
 3. Retirer le champ Instagram, et ne plus proposer « Pas d'inscription » quand la catégorie n'a pas de bouton.
 4. Ajouter la catégorie « Évènement externe ».
 5. Case Tarif pour les évènements JDS : Formule, Tarifs habituels ou Autre (champ de texte).
+6. Champs Places (nombre, inscription obligatoire ou recommandée, Complet), avec le bouton masqué automatiquement quand c'est complet.
 
 ## 5. Corriger les évènements existants (à décider ensuite)
 
