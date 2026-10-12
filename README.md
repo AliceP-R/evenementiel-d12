@@ -52,6 +52,8 @@ https://script.google.com/a/macros/au-de12paris.com/s/AKfycbze5U_fOGKcIdlryhaDd8
    - activer l'API Apps Script sur [script.google.com/home/usersettings](https://script.google.com/home/usersettings)
      avec le compte `@au-de12paris.com` qui a déployé l'outil ;
    - `npm install` puis `npm run connexion` (ouvre le navigateur pour se connecter avec ce même compte).
+     Sur une machine sans navigateur : `npm run connexion -- --no-localhost`, ouvrir le lien affiché ailleurs, puis
+     recoller l'adresse `http://localhost:8888/?code=…` de la page d'erreur obtenue.
 2. À chaque mise à jour : `git pull` puis `npm run deployer`.
    Le code du dossier `apps-script/` remplace celui du projet, puis une nouvelle version est publiée sur le déploiement
    existant : l'URL ne change pas.
