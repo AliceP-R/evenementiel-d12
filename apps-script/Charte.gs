@@ -6,8 +6,9 @@
 //   - Texte type : phrase ou paragraphe réutilisable (mentions, présentation d'une soirée…),
 //     inséré dans la description en un clic.
 //
-// Stockage : Google Sheet « Au Dé 12 · Charte », un onglet par liste, créé au premier enregistrement
-// (propriété du script CHARTE_ID). Le Sheet sert de sauvegarde : on modifie depuis l'outil.
+// Stockage : Google Sheet « Au Dé 12 · Charte », un onglet par liste, créé à la première ouverture de l'outil
+// avec les modèles de la charte (propriétés CHARTE_ID et CHARTE_INITIALISEE). Le Sheet sert de sauvegarde :
+// on modifie depuis l'outil.
 
 const LISTES_CHARTE = {
   modeles: {
@@ -169,9 +170,16 @@ function validerElementCharte(liste, element, autres) {
 
 // ---------- Lecture et écriture dans le Sheet ----------
 
-// Modèles et textes types, triés par nom
+// Modèles et textes types, triés par nom.
+// À la toute première ouverture, les modèles de la charte sont ajoutés automatiquement (une seule fois :
+// si on les supprime ensuite, ils ne reviennent pas, sauf avec le bouton « 📥 Ajouter les modèles de la charte »).
 function chargerCharte() {
   verifierAcces_();
+  const proprietes = PropertiesService.getScriptProperties();
+  if (!proprietes.getProperty('CHARTE_INITIALISEE') && !proprietes.getProperty('CHARTE_ID')) {
+    const r = ajouterModelesDeLaCharte();
+    return { modeles: r.modeles, textes: r.textes };
+  }
   const classeur = classeurCharte_(false);
   return {
     modeles: lireListeCharte_(classeur, 'modeles'),
@@ -230,6 +238,7 @@ function ajouterModelesDeLaCharte() {
       resultat.ajoutes += nouveaux.length;
       resultat[liste] = lireListeCharte_(classeur, liste);
     });
+    PropertiesService.getScriptProperties().setProperty('CHARTE_INITIALISEE', 'oui');
     if (resultat.ajoutes) journaliser_(email, 'Charte : ajout des modèles de départ', 'charte', `${resultat.ajoutes} élément(s)`, '', '');
     return resultat;
   });

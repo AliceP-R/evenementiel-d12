@@ -68,7 +68,8 @@ Bouton « 🎨 Charte ». Pas de rôles : toute personne autorisée peut modifie
 
 Modifier un modèle ne change pas les évènements déjà créés avec lui.
 
-**Modèles de départ** : le bouton « 📥 Ajouter les modèles de la charte » ajoute un modèle par catégorie et des textes
+**Modèles de départ** : ajoutés automatiquement à la première ouverture de l'outil (une seule fois, propriété
+`CHARTE_INITIALISEE`). Ensuite, le bouton « 📥 Ajouter les modèles de la charte » ajoute un modèle par catégorie et des textes
 types, tirés de [formats-descriptions.md](formats-descriptions.md) § 3, seulement s'ils manquent (même nom). Ils sont
 définis dans `MODELES_DE_LA_CHARTE` et `TEXTES_TYPES_DE_LA_CHARTE` (`Charte.gs`).
 
