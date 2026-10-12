@@ -117,7 +117,7 @@ change que la valeur proposée à l'ouverture d'un nouvel évènement, et ce qui
 |---|---|---|---|
 | Visibilité | Public / Privé | Privé = invisible sur le site (cf. § 3.5) | Public |
 | Gérer les inscriptions | Case à cocher, puis nombre de places, inscription obligatoire ou recommandée, Complet | `Places : …` ; Complet masque le bouton (cf. § 2.4) | Cochée pour BOTC, Tables Ouvertes, Découverte, Vadrouilles & Magie, OS & Initiation, Campagne |
-| Tarif | Formule / Tarifs habituels / Autre (champ de texte) / rien | `Tarif : …` (rien = pas de ligne) | Rien ; **obligatoire** pour BOTC, Tables Ouvertes, Découverte |
+| Tarif | Formule / Tarifs habituels / Consommation minimum (champ montant) / Autre (champ de texte) / rien | `Tarif : …` (rien = pas de ligne) | Rien ; **obligatoire** pour BOTC, Tables Ouvertes, Découverte |
 | Inscription sur le site | Bouton habituel / Lien externe / Pas d'inscription | `Inscription : <lien>` ou `Inscription : aucune` | Bouton habituel |
 | Liens propres à l'évènement | Vibes, Meetup, Discord | `Vibes :`, `Meetup :`, `Discord :` | Vides |
 
@@ -130,6 +130,7 @@ change que la valeur proposée à l'ouverture d'un nouvel évènement, et ce qui
 |---|---|
 | Formule | `Tarif : formule avec alcool 18 €, sans alcool 16 €` |
 | Tarifs habituels | `Tarif : tarifs et fonctionnement habituels du bar` |
+| Consommation minimum, avec un champ pour le montant | `Tarif : consommation minimum de <montant> €`, ex. `Tarif : consommation minimum de 90 €` |
 | Autre, avec un champ de texte | `Tarif : <texte saisi>`, ex. `Tarif : 30 € par personne pour le MJ + consommation minimum de 90 € par table` |
 
 ## 3. Modèles par catégorie
@@ -202,7 +203,7 @@ Ce créneau est ouvert à la réservation pour votre table de jeu de rôle !
 
 ⚠️ Ne passez pas par le système de réservation classique du bar : envoyez-nous un message sur Discord, Instagram ou par mail.
 
-Tarif : consommation minimum de 90 € par table
+Tarif : consommation minimum de 90 €
 ```
 
 **MJ PRO - Vadrouilles & Magie** (`colorId` 4)
@@ -228,7 +229,7 @@ Tarif : 30 € par personne pour le MJ + consommation minimum de 90 € par tabl
 Niveau : en anglais
 Animé par : Clémence
 Places : <nombre>, inscription obligatoire
-Tarif : consommation minimum de 90 € pour le groupe
+Tarif : consommation minimum de 90 €
 ```
 
 **MJ PRO - Campagne Semi-Ouverte** (`colorId` 8)
@@ -319,7 +320,8 @@ Rien n'est encore fait. Pistes possibles une fois la charte validée :
 2. Refuser l'enregistrement tant qu'un repère « [à compléter] » reste dans la description publique.
 3. Retirer le champ Instagram.
 4. Ajouter la catégorie « Évènement externe ».
-5. Choix Tarif sur tous les évènements : Formule, Tarifs habituels, Autre (champ de texte) ou rien ; obligatoire pour
+5. Choix Tarif sur tous les évènements : Formule, Tarifs habituels, Consommation minimum (montant), Autre (champ de
+   texte) ou rien ; obligatoire pour
    BOTC, Tables Ouvertes et Découverte.
 6. Case « Gérer les inscriptions » sur tous les évènements, avec les champs Places (nombre, inscription obligatoire ou
    recommandée, Complet) et le bouton masqué automatiquement quand c'est complet.
