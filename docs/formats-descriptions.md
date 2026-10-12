@@ -246,25 +246,31 @@ Places : complet
 
 **Créneau prioritaire à la Ligue Ludique** (`colorId` 11)
 
-Ces évènements sont écrits par une **routine Claude**. Le format ci-dessous est une proposition à reporter dans la
-consigne de la routine si on la retient, pas dans l'outil :
+Ces évènements sont écrits par une **routine Claude** (« Ligue Ludique → Agenda Au Dé 12 JDR », deux fois par jour,
+mois en cours), pas par l'outil ni par la correction en lot. Décision : **on garde son format**, la charte le décrit.
 
 - Titre : `La Ligue Ludique`
-- Créneau pas encore réservé : pas de ligne `Inscription :`, qui affiche aujourd'hui « S'inscrire sur le site de
-  l'organisateur » sur un créneau sans partie.
+- Les parties de la Ligue restent **confidentielles** : leur titre, leur description et le lien du forum ne vont
+  jamais dans la partie publique, seulement dans un bloc `[Ligue Ludique]…[/Ligue Ludique]` de la partie interne.
+- Tous les créneaux ont exactement une ligne `Inscription :` avec le **lien général de l'association** (bouton
+  « S'inscrire sur le site de l'organisateur ») : on ne s'inscrit jamais via l'agenda du bar.
+- Créneau réservé :
 
   ```
-  ⏳ Pas encore réservé : la Ligue Ludique est prioritaire sur ce créneau jusqu'au dernier moment.
+  🔒 Réservé par la Ligue Ludique.
 
-  Pour plus d'informations : https://www.ligue-ludique.fr/lassociation-ligue-ludique-jeux-de-roles-paris/
+  Inscription : https://www.ligue-ludique.fr/lassociation-ligue-ludique-jeux-de-roles-paris/
   ```
-- Créneau réservé : le nom de la partie passe en public, et le lien d'inscription pointe sur le sujet du forum.
+- Créneau pas encore réservé :
 
   ```
-  Partie de la Ligue Ludique : NUMENERA Vortex
+  ⏳ Pas encore réservé mais prioritaire à la Ligue Ludique.
+  La Ligue peut encore le réserver jusqu'au dernier moment. Pour réserver un jeudi ou un samedi, préviens-nous au moins 1 mois à l'avance.
 
-  Inscription : https://www.ligue-ludique.fr/forum/viewtopic.php?p=34276#p34276
+  Inscription : https://www.ligue-ludique.fr/lassociation-ligue-ludique-jeux-de-roles-paris/
   ```
+
+Pour changer ce format, il faut modifier la consigne de la routine (claude.ai/code/routines).
 
 ### 3.3 Nouvelle catégorie « Évènement externe » (à créer)
 
@@ -372,8 +378,8 @@ Les créneaux de la Ligue Ludique n'apparaissent pas dans la correction en lot :
   « Théo Rouy », « Lucas Azer »…).
 - Textes d'attente « [Texte de présentation] », « (X places) », « [à compléter] » restés dans des évènements (privés pour l'instant).
 - Créneau Libre : le bouton de réservation est masqué par `Inscription : aucune` dans toutes les descriptions.
-- Ligue Ludique : 3 variantes de texte. `Inscription : <lien>` sur des créneaux pas encore réservés. Nom de la partie
-  seulement en interne.
+- Ligue Ludique : 3 variantes de texte (uniformisées depuis par la routine, cf. § 3.2 ; le lien de l'association sur
+  les créneaux libres et le nom de la partie en interne sont voulus).
 - Couleurs hors catégorie : JDR 7 (« Meer ! »), JDR 10 (« Fermé »), JDS 4 (Privatisation Marie&TheSapphics).
 - Liens « View Apollo event » restés des anciennes publications (septembre).
 - Machicoulis (tournoi accueilli) en catégorie Soirée Découverte, et capacité dans le titre (`CHESSBAR x12`, `Joueurs Anonymes x20`).
