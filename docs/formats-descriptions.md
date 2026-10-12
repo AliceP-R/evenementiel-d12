@@ -295,9 +295,9 @@ Le calendrier sert aussi à l'équipe : une prestation réservée par quelqu'un 
 | Publique | Affiché, avec sa description publique | La salle est bloquée |
 | Privée | Invisible | **La salle paraît libre** |
 
-À savoir : un évènement privé du calendrier JDR ne bloque pas la salle (règle du site, cf. specs § 4.4). Si une
-prestation privée occupe la salle JDR, le plus sûr est de la créer en **Réservation Client** : la salle est bloquée et le
-public ne voit que « 📌 Cette session est réservée par un client. », sans savoir qui ni pour quoi.
+En JDR, une prestation privée est **toujours une Réservation Client**, jamais un évènement externe ou sans catégorie
+en privé : la salle est bloquée, et le public ne voit que « 📌 Cette session est réservée par un client. », sans savoir
+qui ni pour quoi. (Un évènement privé du calendrier JDR ne bloquerait pas la salle, cf. specs § 4.4.)
 
 ## 4. Ce que l'outil pourrait reprendre (à décider ensuite)
 
