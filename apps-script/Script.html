@@ -6,9 +6,13 @@
     filtre: 'tous',
     categories: { jds: [], jdr: [] },
     evenements: [],
-    enCours: null,      // évènement ouvert dans le formulaire
-    portee: null        // 'occurrence' | 'serie' | null
+    enCours: null,      // évènement (ou modèle) ouvert dans le formulaire
+    portee: null,       // 'occurrence' | 'serie' | null
+    mode: 'evenement',  // 'evenement' | 'modele' : ce que le formulaire enregistre
+    charte: { modeles: [], textes: [] },
+    texteEnCours: null  // texte type ouvert dans son formulaire
   };
+  const CANAUX = ['vibes', 'meetup', 'discord', 'instagram'];
 
   const $ = sel => document.querySelector(sel);
   const form = $('#form');
@@ -110,6 +114,7 @@
       el('div', { class: 'evt-actions' },
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => modifier(ev) }, '✏️ Modifier'),
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => dupliquer(ev) }, '📄 Dupliquer'),
+        el('button', { type: 'button', class: 'btn btn-petit', title: 'En faire un modèle', onclick: () => modeleDepuisEvenement(ev) }, '📌 Modèle'),
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => supprimer(ev) }, '🗑️ Supprimer')
       )
     );
@@ -139,28 +144,48 @@
   }
 
   function majVisibiliteChamps() {
-    const entiere = form.journeeEntiere.checked;
+    const modele = etat.mode === 'modele';
+    const entiere = !modele && form.journeeEntiere.checked;
     $('#bloc-heures').hidden = entiere;
     $('#bloc-date-fin').hidden = !entiere;
     const modeInscription = form.querySelector('[name=inscriptionMode]:checked').value;
     form.inscriptionUrl.hidden = modeInscription !== 'externe';
     $('#bloc-canaux').hidden = modeInscription !== 'normal'; // liens utilisés seulement par le bouton habituel
-    $('#alerte-mardi').hidden = !form.date.value || versDate(form.date.value).getDay() !== 2;
+    $('#alerte-mardi').hidden = modele || !form.date.value || versDate(form.date.value).getDay() !== 2;
     const freq = form.frequence.value;
     $('#bloc-fin-serie').hidden = freq === 'aucune' || freq === 'autre';
   }
 
-  // Ouvre le formulaire. ev = valeurs de départ (évènement existant, copie ou nouveau)
-  function ouvrirFormulaire(ev, titre, encart) {
+  // Ouvre le formulaire. ev = valeurs de départ (évènement existant, copie, nouveau ou modèle).
+  //   options.mode = 'modele' : le formulaire enregistre un modèle de la charte (sans date ni répétition)
+  //   options.choixModele     : propose « Partir d'un modèle » (nouvel évènement)
+  function ouvrirFormulaire(ev, titre, encart, options) {
+    options = options || {};
     etat.enCours = ev;
+    etat.mode = options.mode || 'evenement';
+    const modele = etat.mode === 'modele';
     form.reset();
     $('#form-titre').textContent = titre;
     $('#form-portee').hidden = !encart;
     $('#form-portee').textContent = encart || '';
     $('#form-erreur').hidden = true;
 
+    $('#bloc-nom-modele').hidden = !modele;
+    form.nomModele.value = ev.nom || '';
+    $('#bloc-date').hidden = modele;
+    $('#bloc-choix-modele').hidden = !options.choixModele || !etat.charte.modeles.length;
+    $('#choix-modele').value = '';
+    form.calendrier.disabled = !modele && !!ev.id; // pour changer de calendrier : dupliquer puis supprimer
+    // Répétition : seulement à la création ou pour toute la série
+    $('#bloc-recurrence').hidden = modele || etat.portee === 'occurrence';
+
+    remplirChamps(ev);
+    $('#dlg-form').showModal();
+    (modele ? form.nomModele : form.titre).focus();
+  }
+
+  function remplirChamps(ev) {
     form.calendrier.value = ev.calendrier;
-    form.calendrier.disabled = !!ev.id; // pour changer de calendrier : dupliquer puis supprimer
     remplirCategories(ev.calendrier, ev.colorId);
     form.titre.value = ev.titre || '';
     form.date.value = ev.date || '';
@@ -175,19 +200,15 @@
     form.querySelector(`[name=inscriptionMode][value=${insc.mode}]`).checked = true;
     form.inscriptionUrl.value = insc.url || '';
     const canaux = ev.canaux || {};
-    ['vibes', 'meetup', 'discord', 'instagram'].forEach(c => { form['canal-' + c].value = canaux[c] || ''; });
+    CANAUX.forEach(c => { form['canal-' + c].value = canaux[c] || ''; });
     $('#bloc-canaux').open = Object.values(canaux).some(Boolean);
 
-    // Répétition : seulement à la création ou pour toute la série
     const rec = ev.recurrence || { frequence: 'aucune', fin: '' };
-    $('#bloc-recurrence').hidden = etat.portee === 'occurrence';
     form.querySelector('[name=frequence] option[value=autre]').hidden = rec.frequence !== 'autre';
     form.frequence.value = rec.frequence;
     form.finSerie.value = rec.fin || '';
 
     majVisibiliteChamps();
-    $('#dlg-form').showModal();
-    form.titre.focus();
   }
 
   function lireFormulaire() {
@@ -225,11 +246,20 @@
     bouton.disabled = true;
     bouton.textContent = 'Enregistrement…';
     $('#form-erreur').hidden = true;
-    appel('enregistrerEvenement', lireFormulaire())
-      .then(() => {
-        $('#dlg-form').close();
-        return chargerMois().then(() => { $('#statut').textContent = '✅ Enregistré dans Google Agenda.'; });
-      })
+    const envoi = etat.mode === 'modele'
+      ? appel('enregistrerElementCharte', 'modeles', evenementVersModele(lireFormulaire(), form.nomModele.value, etat.enCours.id))
+        .then(modeles => {
+          etat.charte.modeles = modeles;
+          $('#dlg-form').close();
+          majCharte('✅ Modèle enregistré.');
+          if (!$('#dlg-charte').open) $('#statut').textContent = '✅ Modèle enregistré : il est proposé dans « Nouvel évènement ».';
+        })
+      : appel('enregistrerEvenement', lireFormulaire())
+        .then(() => {
+          $('#dlg-form').close();
+          return chargerMois().then(() => { $('#statut').textContent = '✅ Enregistré dans Google Agenda.'; });
+        });
+    envoi
       .catch(err => {
         $('#form-erreur').textContent = err.message;
         $('#form-erreur').hidden = false;
@@ -246,7 +276,7 @@
     const ajd = aujourdhui();
     const premier = dateStr(etat.annee, etat.mois, 1);
     const date = ajd.slice(0, 7) === premier.slice(0, 7) ? ajd : premier;
-    ouvrirFormulaire({ calendrier: etat.filtre === 'jdr' ? 'jdr' : 'jds', date }, 'Nouvel évènement');
+    ouvrirFormulaire({ calendrier: etat.filtre === 'jdr' ? 'jdr' : 'jds', date }, 'Nouvel évènement', '', { choixModele: true });
   }
 
   function dupliquer(ev) {
@@ -281,18 +311,24 @@
     choix.then(portee => {
       if (portee !== 'occurrence' && portee !== 'serie') return;
       const quoi = portee === 'serie' ? 'toute la série « ' + ev.titre + ' »' : '« ' + ev.titre + ' » du ' + jourLong(ev.date);
-      $('#suppr-texte').textContent = 'Supprimer ' + quoi + ' de Google Agenda ?';
-      const dlg = $('#dlg-suppr');
-      $('#suppr-ok').onclick = () => {
-        $('#suppr-ok').disabled = true;
+      confirmerSuppression('Supprimer ' + quoi + ' de Google Agenda ?', () =>
         appel('supprimerEvenement', ev.calendrier, ev.id, portee)
-          .then(() => { dlg.close(); return chargerMois(); })
-          .then(() => { $('#statut').textContent = '🗑️ Supprimé.'; })
-          .catch(e => { dlg.close(); $('#statut').textContent = '❌ ' + e.message; })
-          .finally(() => { $('#suppr-ok').disabled = false; });
-      };
-      dlg.showModal();
+          .then(() => chargerMois())
+          .then(() => { $('#statut').textContent = '🗑️ Supprimé.'; }));
     });
+  }
+
+  // Demande confirmation, puis lance action() (une promesse)
+  function confirmerSuppression(texte, action) {
+    $('#suppr-texte').textContent = texte;
+    const dlg = $('#dlg-suppr');
+    $('#suppr-ok').onclick = () => {
+      $('#suppr-ok').disabled = true;
+      action()
+        .catch(e => { $($('#dlg-charte').open ? '#charte-statut' : '#statut').textContent = '❌ ' + e.message; })
+        .finally(() => { dlg.close(); $('#suppr-ok').disabled = false; });
+    };
+    dlg.showModal();
   }
 
   // Évènement répété : « cette date seulement » ou « toute la série »
@@ -307,6 +343,177 @@
       dlg.oncancel = () => resolve('annuler');
       dlg.showModal();
     });
+  }
+
+  // ---------- Charte : modèles et textes types ----------
+  function chargerCharte() {
+    return appel('chargerCharte')
+      .then(c => { etat.charte = c; majCharte(); })
+      .catch(e => { $('#charte-statut').textContent = '❌ Charte : ' + e.message; });
+  }
+
+  // Modèle (colonnes à plat, cf. Charte.gs) → valeurs du formulaire
+  function modeleVersEvenement(m) {
+    const canaux = {};
+    CANAUX.forEach(c => { canaux[c] = m[c] || ''; });
+    return {
+      id: m.id, nom: m.nom, calendrier: m.calendrier || 'jds', colorId: m.colorId, titre: m.titre,
+      heureDebut: m.heureDebut, heureFin: m.heureFin, visibilite: m.visibilite,
+      descriptionPublique: m.descriptionPublique, notesInternes: m.notesInternes,
+      inscription: { mode: m.inscriptionMode || 'normal', url: m.inscriptionUrl || '' }, canaux
+    };
+  }
+
+  function evenementVersModele(f, nom, id) {
+    const m = {
+      id: id || '', nom, calendrier: f.calendrier, colorId: f.colorId, titre: f.titre,
+      heureDebut: f.heureDebut, heureFin: f.heureFin, visibilite: f.visibilite,
+      descriptionPublique: f.descriptionPublique, notesInternes: f.notesInternes,
+      inscriptionMode: f.inscription.mode, inscriptionUrl: f.inscription.url
+    };
+    CANAUX.forEach(c => { m[c] = f.canaux[c]; });
+    return m;
+  }
+
+  // Met à jour la fenêtre Charte et les listes de choix du formulaire
+  function majCharte(message) {
+    const { modeles, textes } = etat.charte;
+    $('#charte-statut').textContent = message || '';
+
+    const choix = $('#choix-modele');
+    choix.textContent = '';
+    choix.append(el('option', { value: '' }, '— Formulaire vide —'));
+    modeles.forEach(m => choix.append(el('option', { value: m.id }, (m.calendrier === 'jdr' ? '⚔️ ' : '🎯 ') + m.nom)));
+
+    const inserer = $('#inserer-texte');
+    inserer.textContent = '';
+    inserer.append(el('option', { value: '' }, '✍️ Insérer un texte type…'));
+    textes.forEach(t => inserer.append(el('option', { value: t.id }, t.nom)));
+    $('#bloc-inserer-texte').hidden = !textes.length;
+
+    const listeModeles = $('#liste-modeles');
+    listeModeles.textContent = '';
+    if (!modeles.length) listeModeles.append(el('p', { class: 'vide' }, 'Aucun modèle pour l\'instant.'));
+    modeles.forEach(m => {
+      const cat = (etat.categories[m.calendrier] || []).find(c => c.colorId === m.colorId);
+      const horaire = m.heureDebut && m.heureFin ? `${heureFr(m.heureDebut)} – ${heureFr(m.heureFin)}` : '';
+      listeModeles.append(el('div', { class: 'ligne-charte', style: `border-left-color: ${cat ? cat.teinte : 'var(--texte-doux)'}` },
+        el('div', { class: 'evt-corps' },
+          el('div', { class: 'evt-titre' }, m.nom),
+          el('div', { class: 'badges' },
+            el('span', { class: 'badge' }, m.calendrier === 'jdr' ? '⚔️ JDR' : '🎯 JDS'),
+            el('span', { class: 'badge' }, cat ? cat.nom : 'Sans catégorie'),
+            horaire && el('span', { class: 'badge' }, horaire),
+            m.visibilite === 'privee' && el('span', { class: 'badge' }, '🔒 Privé')
+          )
+        ),
+        el('div', { class: 'evt-actions' },
+          el('button', { type: 'button', class: 'btn btn-petit', onclick: () => modifierModele(m) }, '✏️ Modifier'),
+          el('button', { type: 'button', class: 'btn btn-petit', onclick: () => supprimerElement('modeles', m) }, '🗑️ Supprimer')
+        )
+      ));
+    });
+
+    const listeTextes = $('#liste-textes');
+    listeTextes.textContent = '';
+    if (!textes.length) listeTextes.append(el('p', { class: 'vide' }, 'Aucun texte type pour l\'instant.'));
+    textes.forEach(t => {
+      listeTextes.append(el('div', { class: 'ligne-charte' },
+        el('div', { class: 'evt-corps' },
+          el('div', { class: 'evt-titre' }, t.nom),
+          el('div', { class: 'extrait', title: t.texte }, t.texte.replace(/\s+/g, ' '))
+        ),
+        el('div', { class: 'evt-actions' },
+          el('button', { type: 'button', class: 'btn btn-petit', onclick: () => ouvrirTexte(t) }, '✏️ Modifier'),
+          el('button', { type: 'button', class: 'btn btn-petit', onclick: () => supprimerElement('textes', t) }, '🗑️ Supprimer')
+        )
+      ));
+    });
+  }
+
+  function ouvrirCharte() {
+    majCharte('Chargement…');
+    $('#dlg-charte').showModal();
+    chargerCharte(); // relit le Sheet : changements faits par une autre personne
+  }
+
+  function nouveauModele() {
+    etat.portee = null;
+    ouvrirFormulaire({ calendrier: etat.filtre === 'jdr' ? 'jdr' : 'jds' }, 'Nouveau modèle', '', { mode: 'modele' });
+  }
+
+  function modifierModele(m) {
+    etat.portee = null;
+    ouvrirFormulaire(modeleVersEvenement(m), 'Modifier le modèle',
+      'Les évènements déjà créés avec ce modèle ne changent pas.', { mode: 'modele' });
+  }
+
+  function modeleDepuisEvenement(ev) {
+    etat.portee = null;
+    const modele = Object.assign({}, ev, { id: '', nom: ev.titre });
+    ouvrirFormulaire(modele, 'Nouveau modèle', 'À partir de « ' + ev.titre + ' » : vérifie le nom puis enregistre. La date n\'est pas gardée.', { mode: 'modele' });
+  }
+
+  // Choix d'un modèle en haut de « Nouvel évènement » : tout est rempli sauf la date
+  function appliquerModele() {
+    const m = etat.charte.modeles.find(x => x.id === $('#choix-modele').value);
+    const date = form.date.value;
+    remplirChamps(m ? Object.assign(modeleVersEvenement(m), { id: '', date }) : { calendrier: form.calendrier.value, date });
+  }
+
+  // Insère le texte type choisi à l'endroit du curseur dans la description
+  function insererTexte() {
+    const choix = $('#inserer-texte');
+    const t = etat.charte.textes.find(x => x.id === choix.value);
+    choix.value = '';
+    if (!t) return;
+    const zone = form.descriptionPublique;
+    const avant = zone.value.slice(0, zone.selectionStart);
+    const apres = zone.value.slice(zone.selectionEnd);
+    const debut = avant && !avant.endsWith('\n') ? avant + '\n\n' : avant;
+    const fin = apres && !apres.startsWith('\n') ? '\n\n' + apres : apres;
+    zone.value = debut + t.texte + fin;
+    zone.focus();
+    zone.selectionStart = zone.selectionEnd = debut.length + t.texte.length;
+  }
+
+  function ouvrirTexte(t) {
+    etat.texteEnCours = t || { id: '', nom: '', texte: '' };
+    const f = $('#form-texte');
+    f.nom.value = etat.texteEnCours.nom;
+    f.texte.value = etat.texteEnCours.texte;
+    $('#texte-titre').textContent = t ? 'Modifier le texte type' : 'Nouveau texte type';
+    $('#texte-erreur').hidden = true;
+    $('#dlg-texte').showModal();
+    f.nom.focus();
+  }
+
+  function enregistrerTexte(e) {
+    e.preventDefault();
+    const f = $('#form-texte');
+    const bouton = $('#texte-enregistrer');
+    bouton.disabled = true;
+    $('#texte-erreur').hidden = true;
+    appel('enregistrerElementCharte', 'textes', { id: etat.texteEnCours.id, nom: f.nom.value, texte: f.texte.value })
+      .then(textes => {
+        etat.charte.textes = textes;
+        $('#dlg-texte').close();
+        majCharte('✅ Texte type enregistré.');
+      })
+      .catch(err => {
+        $('#texte-erreur').textContent = err.message;
+        $('#texte-erreur').hidden = false;
+      })
+      .finally(() => { bouton.disabled = false; });
+  }
+
+  function supprimerElement(liste, element) {
+    const quoi = liste === 'modeles' ? 'le modèle' : 'le texte type';
+    confirmerSuppression('Supprimer ' + quoi + ' « ' + element.nom + ' » ?', () =>
+      appel('supprimerElementCharte', liste, element.id).then(elements => {
+        etat.charte[liste] = elements;
+        majCharte('🗑️ Supprimé.');
+      }));
   }
 
   // ---------- Branchements ----------
@@ -331,11 +538,19 @@
       .catch(e => { if (fenetre) fenetre.close(); $('#statut').textContent = '❌ ' + e.message; });
   });
   $('#btn-annuler').addEventListener('click', () => $('#dlg-form').close());
+  $('#btn-charte').addEventListener('click', ouvrirCharte);
+  $('#charte-fermer').addEventListener('click', () => $('#dlg-charte').close());
+  $('#btn-nouveau-modele').addEventListener('click', nouveauModele);
+  $('#btn-nouveau-texte').addEventListener('click', () => ouvrirTexte(null));
+  $('#texte-annuler').addEventListener('click', () => $('#dlg-texte').close());
+  $('#form-texte').addEventListener('submit', enregistrerTexte);
+  $('#choix-modele').addEventListener('change', appliquerModele);
+  $('#inserer-texte').addEventListener('change', insererTexte);
   $('#suppr-annuler').addEventListener('click', () => $('#dlg-suppr').close());
   form.addEventListener('submit', enregistrer);
   form.calendrier.addEventListener('change', () => remplirCategories(form.calendrier.value, ''));
   form.colorId.addEventListener('change', majAideCategorie);
   form.addEventListener('change', majVisibiliteChamps);
 
-  chargerMois();
+  chargerMois().then(chargerCharte); // catégories d'abord : la charte les affiche
 </script>

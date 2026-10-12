@@ -54,6 +54,20 @@ de **vrais champs**. L'outil écrit lui-même les conventions dans Google Agenda
 | Journal | Chaque création, modification ou suppression ajoute une ligne (quand, qui, action, calendrier, titre, date, identifiant) dans un Google Sheet créé automatiquement. Bouton « 📜 Journal ». |
 | Garde-fous | Champs obligatoires, liens en `https://`, catégorie cohérente avec le calendrier, avertissement si la date tombe un mardi. |
 
+### 4.1 bis Charte : modèles et textes types ✅
+
+Bouton « 🎨 Charte ». Pas de rôles : toute personne autorisée peut modifier (en particulier Clémence, qui gère la charte).
+
+| Fonction | Détail |
+|---|---|
+| Modèles d'évènements | Mêmes champs que le formulaire (cf. 4.2), **sans date ni répétition**, plus un nom unique. Créer, modifier, supprimer depuis la Charte, ou « 📌 Modèle » sur un évènement de la liste. |
+| Partir d'un modèle | En haut de « Nouvel évènement » : le choix d'un modèle remplit tout le formulaire sauf la date. |
+| Textes types | Nom unique + texte. Liste « ✍️ Insérer un texte type… » sous la description publique : insère le texte à l'endroit du curseur. |
+| Stockage | Google Sheet « Au Dé 12 · Charte » (onglets « Modèles » et « Textes types », colonnes lisibles), créé au premier enregistrement, propriété `CHARTE_ID`. Écritures sous verrou (deux personnes en même temps ne s'écrasent pas). |
+| Journal | Chaque création, modification ou suppression dans la charte ajoute une ligne (calendrier : « Charte »). |
+
+Modifier un modèle ne change pas les évènements déjà créés avec lui.
+
 ### 4.2 Champs du formulaire et correspondance Google Agenda
 
 | Champ | Écrit dans Google Agenda |
@@ -137,6 +151,7 @@ Sans catégorie : pas de bouton, bloque la salle.
 - **Code** :
   - `Conventions.gs` : traduction champs ↔ Google Agenda, fonctions pures testées avec Node (`node --test tests/*.test.js`) ;
   - `Code.gs` : appels Google ;
+  - `Charte.gs` : modèles et textes types (validation testée avec Node, lecture et écriture du Google Sheet) ;
   - `Index.html`, `Style.html`, `Script.html` : interface en HTML, CSS et JS vanilla, sans build.
 - **iCal** : chaque agenda Google fournit déjà une adresse iCal publique (Paramètres de l'agenda → « Adresse publique au format iCal »).
 

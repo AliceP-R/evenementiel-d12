@@ -8,6 +8,7 @@
 // Propriétés du script (Paramètres du projet → Propriétés du script) :
 //   EMAILS_AUTORISES : adresses autorisées, séparées par des virgules (recommandé)
 //   JOURNAL_ID       : identifiant du Google Sheet du journal (créé automatiquement sinon)
+//   CHARTE_ID        : identifiant du Google Sheet des modèles et textes types (créé automatiquement sinon)
 
 const CALENDRIERS = {
   jds: { id: 'c_b182530e0a332b3e4f20ff0c2308bb5010f8c91130af1b6e6828aa6a15751a6e@group.calendar.google.com', nom: 'Jeux de société' },
@@ -170,7 +171,8 @@ function valider_(f) {
 
 function journaliser_(email, action, type, titre, date, id) {
   try {
-    feuilleJournal_().appendRow([new Date(), email, action, CALENDRIERS[type].nom, titre, date, id]);
+    const quoi = CALENDRIERS[type] ? CALENDRIERS[type].nom : 'Charte';
+    feuilleJournal_().appendRow([new Date(), email, action, quoi, titre, date, id]);
   } catch (e) {
     console.error('Journal impossible : ' + e); // le journal ne doit pas bloquer l'enregistrement
   }

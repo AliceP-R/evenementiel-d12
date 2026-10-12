@@ -10,6 +10,7 @@
     <h1>🎲 Au Dé 12 · Évènements</h1>
     <div class="entete-droite">
       <span id="utilisateur" class="discret"></span>
+      <button type="button" class="btn btn-lien" id="btn-charte">🎨 Charte</button>
       <button type="button" class="btn btn-lien" id="btn-journal">📜 Journal</button>
     </div>
   </header>
@@ -39,6 +40,14 @@
       <h2 id="form-titre">Nouvel évènement</h2>
       <p id="form-portee" class="encart" hidden></p>
 
+      <label id="bloc-choix-modele" class="choix-modele" hidden>📋 Partir d'un modèle
+        <select id="choix-modele"></select>
+      </label>
+      <label id="bloc-nom-modele" hidden>Nom du modèle
+        <input name="nomModele" maxlength="100" placeholder="Ex. : Soirée BOTC du vendredi">
+        <small class="discret">C'est ce nom qu'on choisit dans « Partir d'un modèle ».</small>
+      </label>
+
       <div class="grille">
         <label>Calendrier
           <select name="calendrier" required>
@@ -54,7 +63,7 @@
 
       <label>Titre<input name="titre" required maxlength="200"></label>
 
-      <div class="grille">
+      <div class="grille" id="bloc-date">
         <label>Date<input type="date" name="date" required></label>
         <label class="case"><input type="checkbox" name="journeeEntiere"> Journée entière</label>
       </div>
@@ -80,6 +89,9 @@
 
       <label>Description publique
         <textarea name="descriptionPublique" rows="5" placeholder="Visible par tout le monde sur le site. Les liens https://… deviennent cliquables."></textarea>
+      </label>
+      <label id="bloc-inserer-texte" class="inserer-texte" hidden>
+        <select id="inserer-texte" aria-label="Insérer un texte type dans la description"></select>
       </label>
 
       <fieldset>
@@ -125,6 +137,49 @@
       <div class="actions">
         <button type="button" class="btn" id="btn-annuler">Annuler</button>
         <button type="submit" class="btn btn-plein" id="btn-enregistrer">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Charte : modèles d'évènements et textes types -->
+  <dialog id="dlg-charte" aria-labelledby="charte-titre">
+    <h2 id="charte-titre">🎨 Charte</h2>
+    <p class="discret">Ce qui est enregistré ici sert à toute l'équipe. Modifier un modèle ne change pas les évènements déjà créés.</p>
+
+    <section>
+      <div class="charte-entete">
+        <h3>📋 Modèles d'évènements</h3>
+        <button type="button" class="btn btn-petit" id="btn-nouveau-modele">➕ Nouveau modèle</button>
+      </div>
+      <p class="discret">Formulaires préremplis, à choisir en haut de « Nouvel évènement ». Astuce : le bouton 📌 d'un évènement en fait un modèle.</p>
+      <div id="liste-modeles"></div>
+    </section>
+
+    <section>
+      <div class="charte-entete">
+        <h3>✍️ Textes types</h3>
+        <button type="button" class="btn btn-petit" id="btn-nouveau-texte">➕ Nouveau texte</button>
+      </div>
+      <p class="discret">Phrases à réutiliser (présentation d'une soirée, mentions, règles…), à insérer sous la description.</p>
+      <div id="liste-textes"></div>
+    </section>
+
+    <p id="charte-statut" class="statut" role="status"></p>
+    <div class="actions">
+      <button type="button" class="btn btn-plein" id="charte-fermer">Fermer</button>
+    </div>
+  </dialog>
+
+  <!-- Texte type -->
+  <dialog id="dlg-texte" aria-labelledby="texte-titre">
+    <form id="form-texte" novalidate>
+      <h2 id="texte-titre">Texte type</h2>
+      <label>Nom<input name="nom" required maxlength="100" placeholder="Ex. : Présentation BOTC"></label>
+      <label>Texte<textarea name="texte" rows="8" required></textarea></label>
+      <p id="texte-erreur" class="erreur" role="alert" hidden></p>
+      <div class="actions">
+        <button type="button" class="btn" id="texte-annuler">Annuler</button>
+        <button type="submit" class="btn btn-plein" id="texte-enregistrer">Enregistrer</button>
       </div>
     </form>
   </dialog>
