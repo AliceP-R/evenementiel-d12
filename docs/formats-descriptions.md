@@ -75,12 +75,14 @@ Mêmes libellés pour tous les types, une ligne sans objet est supprimée (pas d
 
 ### 2.4 Places : champs de l'outil
 
-Comme le tarif, la ligne `Places :` n'apparaît plus dans le champ « Description publique » du formulaire. On remplit
-trois champs, et l'outil écrit la ligne dans Google Agenda à l'enregistrement. À l'ouverture d'un évènement, il relit
-la ligne, la retire du texte affiché et remplit les champs.
+Comme le tarif, la ligne `Places :` n'apparaît plus dans le champ « Description publique » du formulaire. Tous les
+évènements ont une case **« Gérer les inscriptions »** : cochée, elle ouvre trois champs, et l'outil écrit la ligne dans
+Google Agenda à l'enregistrement ; décochée, pas de ligne `Places :`. À l'ouverture d'un évènement, l'outil relit la
+ligne, la retire du texte affiché, coche la case et remplit les champs.
 
 | Champ du formulaire | Valeur |
 |---|---|
+| Gérer les inscriptions | Case à cocher, sur tous les évènements |
 | Nombre de places | Un nombre, à remplir à chaque fois (seules les Tables Ouvertes, 15, et les soirées BOTC, 12, sont préremplies) |
 | Inscription | « Obligatoire » ou « Recommandée » |
 | Complet | Case à cocher |
@@ -91,12 +93,12 @@ la ligne, la retire du texte affiché et remplit les champs.
 | 15 + Recommandée | `Places : 15, inscription recommandée` | Celui de la catégorie |
 | Complet coché | `Places : complet` | **Masqué automatiquement** (l'outil ajoute `Inscription : aucune`) |
 
-| Catégorie | Champs Places |
+Une fois la case cochée, il faut remplir le nombre et l'inscription, ou cocher Complet.
+
+| Catégorie | « Gérer les inscriptions » à l'ouverture d'un nouvel évènement |
 |---|---|
-| Soirée BOTC, Tables Ouvertes, Soirée Découverte, Vadrouilles & Magie, OS & Initiation | Obligatoires : nombre et inscription, ou Complet |
-| Campagne Semi-Ouverte | Seulement la case Complet (pas de bouton à masquer) |
-| Évènement externe | Facultatifs ; la jauge réelle va plutôt en interne |
-| Réservation Client, Créneau Libre, Ligue Ludique, sans catégorie | Pas de champs Places |
+| Soirée BOTC, Tables Ouvertes, Soirée Découverte, Vadrouilles & Magie, OS & Initiation, Campagne | Cochée |
+| Réservation Client, Créneau Libre, Ligue Ludique, Évènement externe, sans catégorie | Décochée, mais on peut la cocher |
 
 ### 2.5 Typographie
 
@@ -290,7 +292,8 @@ Rien n'est encore fait. Pistes possibles une fois la charte validée :
 3. Retirer le champ Instagram, et ne plus proposer « Pas d'inscription » quand la catégorie n'a pas de bouton.
 4. Ajouter la catégorie « Évènement externe ».
 5. Case Tarif pour les évènements JDS : Formule, Tarifs habituels ou Autre (champ de texte).
-6. Champs Places (nombre, inscription obligatoire ou recommandée, Complet), avec le bouton masqué automatiquement quand c'est complet.
+6. Case « Gérer les inscriptions » sur tous les évènements, avec les champs Places (nombre, inscription obligatoire ou
+   recommandée, Complet) et le bouton masqué automatiquement quand c'est complet.
 
 ## 5. Corriger les évènements existants (à décider ensuite)
 
