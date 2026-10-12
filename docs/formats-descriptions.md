@@ -89,7 +89,10 @@ Mêmes libellés pour tous les types, une ligne sans objet est supprimée (pas d
 
 ### 3.1 JDS
 
-**Tarif : case à cocher.** La ligne `Tarif :` n'est plus tapée à la main : on coche un choix et l'outil l'écrit.
+**Tarif : case à cocher.** La ligne `Tarif :` n'apparaît plus dans le champ « Description publique » du formulaire :
+on coche un choix, et c'est l'outil qui écrit la ligne dans Google Agenda à l'enregistrement, juste après les autres
+lignes pratiques. À l'ouverture d'un évènement, l'outil relit cette ligne, la retire du texte affiché et coche le bon
+choix (texte différent des deux tarifs connus = « Autre », avec ce texte), comme il le fait déjà pour `Inscription :`.
 
 | Choix | Ligne écrite |
 |---|---|
