@@ -50,7 +50,7 @@ Les lignes sont toujours dans cet ordre, avec ces libellés exacts. Une ligne sa
 | `Niveau :` | Si ce n'est pas évident d'après la catégorie | `Niveau : déconseillé aux débutant·es` · `Niveau : en anglais` |
 | `Animé par :` | Personne ou groupe qui anime (toujours en public, plus « MJ : » ni « Conteur : ») | `Animé par : Martin` · `Animé par : les autrices du jeu` |
 | `Places :` | **Écrite par l'outil** (cf. § 2.4) : total seulement, ou « complet ». La répartition par canal va en interne. | `Places : 15, inscription recommandée` · `Places : complet` |
-| `Tarif :` | **Écrite par l'outil** (choix Tarif, cf. § 2.6). | `Tarif : consommation minimum de 90 € pour le groupe` |
+| `Tarif :` | **Écrite par l'outil** (choix Tarif, cf. § 2.6). | `Tarif : consommation minimum de 90 €` |
 
 ### 2.2 Lignes lues par le site (écrites par l'outil)
 
