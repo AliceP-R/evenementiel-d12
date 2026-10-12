@@ -143,7 +143,7 @@ Tarif : formule avec alcool 18 €, sans alcool 16 €
 - Titres : `Tables Ouvertes du Lundi`, `Tables Ouvertes du Jeudi`, `S.A.D : Soirée Anti-Déprime du Dimanche`
 
 ```
-Les tables ouvertes sont des espaces de jeu inclusifs où chacun·e est bienvenu·e. Découvrez de nouvelles connaissances, de nouveaux univers, de nouvelles mécaniques, de nouveaux jeux et créez de nouveaux liens dans une ambiance bienveillante et sans prise de tête !
+Les tables ouvertes sont des espaces de jeu inclusifs où chacun·e est bienvenu·e. Découvrez de nouvelles connaissances, de nouveaux univers, de nouvelles mécaniques, de nouveaux jeux et créez de nouveaux liens dans une ambiance bienveillante et sans prise de tête ! Pensez à vous inscrire, pour que personne ne se retrouve isolé·e !
 
 Places : 15, inscription recommandée
 Tarif : tarifs et fonctionnement habituels du bar
