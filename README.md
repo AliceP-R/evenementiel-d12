@@ -17,6 +17,7 @@ https://script.google.com/a/macros/au-de12paris.com/s/AKfycbze5U_fOGKcIdlryhaDd8
 | `apps-script/Conventions.gs` | Traduction formulaire ↔ conventions Google Agenda (description, horaires, répétition) |
 | `apps-script/Categories.gs` | Catégories = couleurs Google Agenda (identiques à `COULEURS` du site public) |
 | `apps-script/Charte.gs` | Charte : modèles d'évènements et textes types, enregistrés dans un Google Sheet |
+| `apps-script/Corrections.gs` | Correction en lot des évènements existants au format de la charte |
 | `apps-script/Index.html`, `Style.html`, `Script.html` | Interface (HTML, CSS et JS vanilla, sans build) |
 | `apps-script/appsscript.json` | Manifeste : fuseau, service avancé Calendar, accès réservé au domaine |
 | `tests/` | Tests des conventions : `node --test tests/*.test.js` (Node 18 ou plus, aucune dépendance) |
@@ -29,7 +30,7 @@ https://script.google.com/a/macros/au-de12paris.com/s/AKfycbze5U_fOGKcIdlryhaDd8
    C'est un projet **séparé** de celui du site public.
 2. **Paramètres du projet** (⚙️) : cocher « Afficher le fichier manifeste appsscript.json ».
 3. Recréer chaque fichier du dossier `apps-script/` avec **le même nom** et y coller son contenu :
-   - fichiers script (`+` → Script) : `Code`, `Conventions`, `Categories`, `Charte` ;
+   - fichiers script (`+` → Script) : `Code`, `Conventions`, `Categories`, `Charte`, `Corrections` ;
    - fichiers HTML (`+` → HTML) : `Index`, `Style`, `Script` ;
    - remplacer le contenu de `appsscript.json`.
 4. **Paramètres du projet** → **Propriétés du script** → ajouter `EMAILS_AUTORISES` avec les deux adresses,
@@ -66,6 +67,19 @@ Les modèles sont enregistrés dans un Google Sheet « Au Dé 12 · Charte », c
 du compte qui a déployé (propriété `CHARTE_ID`). Il sert de sauvegarde : on modifie depuis l'outil.
 
 Pour que Clémence puisse s'en servir, ajouter son adresse à `EMAILS_AUTORISES` (Propriétés du script).
+
+## Places, tarif et correction en lot
+
+- **Places** : case « Gérer les inscriptions » (nombre, inscription obligatoire ou recommandée, Complet). L'outil écrit
+  la ligne `Places :` ; « Complet » masque le bouton d'inscription.
+- **Tarif** : Formule, Tarifs habituels, Consommation minimum (montant), Autre (texte) ou rien. Obligatoire pour
+  Soirée BOTC, Tables Ouvertes et Soirée Découverte.
+- **🧹 Corriger en lot** : analyse une période, propose catégorie par catégorie les corrections de la charte (titre
+  répété, horaires, « Pour vous inscrire… », places et prix écrits à la main, `Inscription : aucune` inutile, nom de
+  client en public…) avec un aperçu avant / après. Seuls les évènements cochés sont réécrits (titre et description),
+  et chaque correction va dans le journal. Ce que l'outil ne sait pas faire seul est signalé « à corriger à la main ».
+- **Évènement externe** (Myrtille) : nouvelle catégorie, à mettre en ligne **en même temps** dans le site public
+  (branche `claude/compassionate-lamport-z7f6ms` du dépôt `calendrier-d12`).
 
 ## Bon à savoir
 

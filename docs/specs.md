@@ -76,6 +76,17 @@ définis dans `MODELES_DE_LA_CHARTE` et `TEXTES_TYPES_DE_LA_CHARTE` (`Charte.gs`
 L'enregistrement d'un évènement est refusé tant qu'il en reste un dans le titre, la description publique ou les notes
 internes.
 
+### 4.1 ter Places, tarif, correction en lot ✅
+
+Cf. [formats-descriptions.md](formats-descriptions.md) § 2.4, 2.6 et 5.
+
+| Fonction | Détail |
+|---|---|
+| Places | Case « Gérer les inscriptions », nombre (1 à 999), inscription obligatoire ou recommandée, Complet. Ligne `Places : 12, inscription obligatoire` ou `Places : complet` (+ `Inscription : aucune`, et pas de liens par canal). Relue à l'ouverture ; un autre format reste dans la description. Cochée à la création pour les catégories qui ont `inscriptions: true` (`Categories.gs`), 12 places préremplies en BOTC, 15 recommandées en Tables Ouvertes. |
+| Tarif | Formule / Tarifs habituels / Consommation minimum (montant) / Autre (texte) / rien. Ligne `Tarif : …`, relue à l'ouverture (texte inconnu = Autre). Obligatoire pour les catégories `tarifObligatoire`. |
+| Ordre | Places et Tarif sont ajoutées à la fin de la description publique, sur la ligne suivante si la description finit par `Scénario :`, `Niveau :`, `Animé par :` ou `Organisé par :`, sinon après une ligne vide. |
+| Correction en lot | Bouton « 🧹 Corriger en lot » : analyse une période (séries = un évènement), propose par catégorie les corrections de `Corrections.gs` avec aperçu, et ne réécrit (`patch` du titre et de la description) que les évènements cochés. La Ligue Ludique (routine Claude) n'est pas touchée. |
+
 ### 4.2 Champs du formulaire et correspondance Google Agenda
 
 | Champ | Écrit dans Google Agenda |
@@ -88,7 +99,8 @@ internes.
 | Visibilité | Public = `default`, Privé = `private` (masqué par le site public) |
 | Description publique | Début de la description |
 | Inscription | « Bouton habituel » : aucune ligne. « Lien externe » : ligne `Inscription : <lien>`. « Pas d'inscription » : ligne `Inscription : aucune`. |
-| Liens par canal | Lignes `Vibes :`, `Meetup :`, `Discord :`, `Instagram :`. Écrites **seulement avec le bouton habituel**, le seul cas où le site les utilise. |
+| Liens par canal | Lignes `Vibes :`, `Meetup :`, `Discord :`, `Instagram :`. Écrites **seulement avec le bouton habituel** (et pas quand c'est complet), le seul cas où le site les utilise. |
+| Places, Tarif | Lignes `Places :` et `Tarif :` (cf. 4.1 ter) |
 | Notes internes | Après `---interne---`, **jamais envoyées au public** (coupées par l'Apps Script du site) |
 | Répétition | `recurrence` : `RRULE:FREQ=WEEKLY[;INTERVAL=2][;UNTIL=…]` |
 
@@ -122,11 +134,13 @@ Une même couleur n'a pas le même sens en JDS et en JDR. Elles sont définies d
 | JDS | 3 | Soirée BOTC | inscription | |
 | JDS | 5 | Tables Ouvertes | inscription | |
 | JDS | 7 | Soirée Découverte | inscription | |
+| JDS | 9 | Évènement externe | aucun | |
 | JDR | 2 | Réservation Client | aucun | bloque |
 | JDR | 3 | Créneau Libre | réservation | libre |
 | JDR | 4 | MJ PRO - Vadrouilles & Magie | inscription | bloque |
 | JDR | 5 | OS & Initiation | inscription | bloque |
 | JDR | 8 | MJ PRO - Campagne Semi-Ouverte | aucun | bloque |
+| JDR | 9 | Évènement externe | aucun | bloque |
 | JDR | 11 | Créneau prioritaire à la Ligue Ludique | aucun | ligue |
 
 Sans catégorie : pas de bouton, bloque la salle.

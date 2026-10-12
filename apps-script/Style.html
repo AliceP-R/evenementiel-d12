@@ -100,10 +100,19 @@
   }
   .ligne-charte .evt-corps { min-width: 12em; }
   .extrait { color: var(--texte-doux); font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  dialog.large { width: min(960px, calc(100vw - 32px)); }
+  #form-corrections label { margin: 0; }
+  .groupe-corrections h3 { display: flex; align-items: center; gap: 8px; margin: 18px 0 6px; font-size: 1.05rem; }
+  .correction { border: 1px solid var(--creme-fonce); border-left: 8px solid var(--texte-doux); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; }
+  .correction label.case { font-weight: 600; margin: 0; }
+  .correction ul { margin: 4px 0; padding-left: 20px; }
+  .correction .a-verifier { color: var(--rouge); }
+  .apercu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .apercu pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--creme); border-radius: 6px; padding: 6px 8px; margin: 4px 0; font: .85rem/1.4 ui-monospace, monospace; }
   .actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 
   @media (max-width: 600px) {
-    .grille { grid-template-columns: 1fr; }
+    .grille, .apercu { grid-template-columns: 1fr; }
     .evt { flex-wrap: wrap; }
     .evt-heure { min-width: 0; width: 100%; }
     .evt-actions { width: 100%; justify-content: flex-start; }

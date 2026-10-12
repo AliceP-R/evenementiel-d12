@@ -1,6 +1,6 @@
 # Format des titres et descriptions d'évènements
 
-*Proposition à relire · octobre 2026 · seuls les modèles et le repère « [à compléter] » sont dans l'outil (cf. § 4)*
+*Octobre 2026 · décisions prises et appliquées dans l'outil : cf. § 4 et § 5*
 
 Cette charte fixe une seule façon d'écrire le titre et la description de chaque type d'évènement. Elle part de l'état
 des lieux des évènements d'août à décembre 2026 (cf. § 6).
@@ -312,9 +312,8 @@ En JDR, une prestation privée est **toujours une Réservation Client**, jamais 
 en privé : la salle est bloquée, et le public ne voit que « 📌 Cette session est réservée par un client. », sans savoir
 qui ni pour quoi. (Un évènement privé du calendrier JDR ne bloquerait pas la salle, cf. specs § 4.4.)
 
-## 4. Ce que l'outil pourrait reprendre (à décider ensuite)
+## 4. Ce que l'outil reprend
 
-Rien n'est encore fait. Pistes possibles une fois la charte validée :
 
 1. ✅ Préremplir le formulaire avec un modèle : fait avec la **Charte** de l'outil (bouton « 📥 Ajouter les modèles de
    la charte » : un modèle par catégorie du § 3 et les textes types). On choisit le modèle en haut de « Nouvel
@@ -322,17 +321,27 @@ Rien n'est encore fait. Pistes possibles une fois la charte validée :
    Évènement externe (catégorie à créer), Fermeture (journée entière).
 2. ✅ Refuser l'enregistrement tant qu'un repère « [à compléter] » reste dans le titre, la description publique ou les
    notes internes.
-3. Retirer le champ Instagram.
-4. Ajouter la catégorie « Évènement externe ».
-5. Choix Tarif sur tous les évènements : Formule, Tarifs habituels, Consommation minimum (montant), Autre (champ de
-   texte) ou rien ; obligatoire pour
-   BOTC, Tables Ouvertes et Découverte.
-6. Case « Gérer les inscriptions » sur tous les évènements, avec les champs Places (nombre, inscription obligatoire ou
-   recommandée, Complet) et le bouton masqué automatiquement quand c'est complet.
+3. ❌ Retirer le champ Instagram : **décidé de le garder** (les lignes `Instagram :` existantes ne sont pas retirées).
+4. ✅ Catégorie « Évènement externe » (Myrtille, `colorId` 9) dans l'outil **et** le site public, à mettre en ligne
+   ensemble.
+5. ✅ Choix Tarif sur tous les évènements, obligatoire pour BOTC, Tables Ouvertes et Découverte.
+6. ✅ Case « Gérer les inscriptions » et champs Places, bouton masqué quand c'est complet.
 
-## 5. Corriger les évènements existants (à décider ensuite)
+## 5. Corriger les évènements existants : correction en lot ✅
 
-Réécrire les évènements à venir au nouveau format dans Google Agenda, catégorie par catégorie, seulement après accord.
+Bouton « 🧹 Corriger en lot » de l'outil : il analyse une période et propose, catégorie par catégorie, les corrections
+qu'il sait faire seul, avec un aperçu avant / après. On coche ce qu'on valide ; seuls le titre et la description des
+évènements cochés sont réécrits, et chaque correction est notée dans le journal.
+
+| Corrigé par l'outil | Signalé « à corriger à la main » |
+|---|---|
+| Titre : préfixe `JDR - `, « ! » final, tirets longs, « Tables Ouvertes - Jeudi », jauge `x12`, mot en MAJUSCULES, « Découvertre », « Réservation client » | Couleur hors catégorie (JDR 7, JDR 10, JDS 4…) |
+| 1re ligne qui répète le titre, horaires, « Pour vous inscrire… », « View Apollo event » | Textes d'attente « [Texte de présentation] », « (X places) » |
+| Places écrites à la main (`16 places`, `(16 places)`, `Places : 16`, `COMPLET`) → champ Places | Ligne `Places :` dans un autre format |
+| `Prix :` / `Tarif :` → champ Tarif (« 18 € ») ; tarif de la charte ajouté s'il manque (BOTC, Tables Ouvertes, Découverte, Créneau Libre, Vadrouilles & Magie, OS & Initiation ; pas sur un évènement privé) | Classement d'un évènement accueilli en Évènement externe (ex. Machicoulis) |
+| `Inscription : aucune` inutile (catégorie sans bouton) ou qui masque le bouton du Créneau Libre | Ligue Ludique : laissée à la routine Claude |
+| Réservation Client : phrase fixe en public, l'ancien texte (nom du client) passe en interne | |
+| `18€` → `18 €`, `.e.s` → `·es` ; libellés internes vides (`Notes :`) | |
 
 ## 6. État des lieux (août à décembre 2026)
 

@@ -355,13 +355,18 @@
   }
 
   // Demande confirmation, puis lance action() (une promesse)
-  function confirmerSuppression(texte, action) {
+  function confirmerSuppression(texte, action, libelle) {
+    $('#suppr-titre').textContent = (libelle || 'Supprimer') + ' ?';
+    $('#suppr-ok').textContent = libelle || 'Supprimer';
     $('#suppr-texte').textContent = texte;
     const dlg = $('#dlg-suppr');
     $('#suppr-ok').onclick = () => {
       $('#suppr-ok').disabled = true;
       action()
-        .catch(e => { $($('#dlg-charte').open ? '#charte-statut' : '#statut').textContent = '❌ ' + e.message; })
+        .catch(e => {
+          const statut = $('#dlg-corrections').open ? '#corrections-statut' : $('#dlg-charte').open ? '#charte-statut' : '#statut';
+          $(statut).textContent = '❌ ' + e.message;
+        })
         .finally(() => { dlg.close(); $('#suppr-ok').disabled = false; });
     };
     dlg.showModal();
@@ -571,6 +576,108 @@
       .finally(() => { bouton.disabled = false; });
   }
 
+  // ---------- Correction en lot ----------
+  function ouvrirCorrections() {
+    const f = $('#form-corrections');
+    if (!f.debut.value) {
+      const fin = new Date();
+      fin.setMonth(fin.getMonth() + 3);
+      f.debut.value = aujourdhui();
+      f.fin.value = dateStr(fin.getFullYear(), fin.getMonth(), fin.getDate());
+    }
+    $('#dlg-corrections').showModal();
+  }
+
+  function analyserCorrections(e) {
+    if (e) e.preventDefault();
+    const f = $('#form-corrections');
+    $('#btn-analyser').disabled = true;
+    $('#btn-appliquer').disabled = true;
+    $('#liste-corrections').textContent = '';
+    $('#corrections-statut').textContent = 'Analyse des évènements… (peut prendre quelques secondes)';
+    // La date de fin est incluse
+    const fin = versDate(f.fin.value);
+    fin.setDate(fin.getDate() + 1);
+    return appel('analyserCorrections', f.debut.value, dateStr(fin.getFullYear(), fin.getMonth(), fin.getDate()))
+      .then(afficherCorrections)
+      .catch(err => { $('#corrections-statut').textContent = '❌ ' + err.message; })
+      .finally(() => { $('#btn-analyser').disabled = false; });
+  }
+
+  function afficherCorrections(resultats) {
+    const liste = $('#liste-corrections');
+    liste.textContent = '';
+    const aCorriger = resultats.filter(r => r.changements.length).length;
+    $('#corrections-statut').textContent = resultats.length
+      ? `${aCorriger} évènement(s) à corriger, ${resultats.length - aCorriger} à reprendre seulement à la main.`
+      : '✅ Tout est déjà au format de la charte sur cette période.';
+
+    // Groupes par catégorie, dans l'ordre des catégories
+    const groupes = {};
+    resultats.forEach(r => {
+      const cat = (etat.categories[r.calendrier] || []).find(c => c.colorId === r.colorId);
+      const cle = r.calendrier + '|' + r.colorId;
+      (groupes[cle] = groupes[cle] || { cat, nom: (r.calendrier === 'jds' ? '🎯 ' : '⚔️ ') + (cat ? cat.nom : r.colorId ? 'Couleur ' + r.colorId + ' (hors catégorie)' : 'Sans catégorie'), items: [] }).items.push(r);
+    });
+    // JDS puis JDR, dans l'ordre des catégories ; hors catégorie à la fin
+    const rang = cle => {
+      const [cal, colorId] = cle.split('|');
+      const i = (etat.categories[cal] || []).findIndex(c => c.colorId === colorId);
+      return (cal === 'jds' ? 0 : 100) + (i === -1 ? 99 : i);
+    };
+    Object.keys(groupes).sort((a, b) => rang(a) - rang(b)).forEach(cle => {
+      const g = groupes[cle];
+      const cases = [];
+      const toutes = el('input', { type: 'checkbox', checked: '', onchange: e => { cases.forEach(c => { c.checked = e.target.checked; }); majBoutonAppliquer(); } });
+      const section = el('section', { class: 'groupe-corrections' },
+        el('h3', {}, g.items.some(r => r.changements.length) && toutes, `${g.nom} (${g.items.length})`));
+      g.items.forEach(r => {
+        const coche = r.changements.length > 0 && el('input', { type: 'checkbox', checked: '', 'data-calendrier': r.calendrier, 'data-id': r.id, onchange: majBoutonAppliquer });
+        if (coche) cases.push(coche);
+        const quand = (r.serie ? '🔁 série depuis le ' : '') + jourLong(r.date);
+        section.append(el('article', { class: 'correction', style: `border-left-color: ${g.cat ? g.cat.teinte : 'var(--texte-doux)'}` },
+          el('label', { class: 'case' }, coche, r.titre !== r.titreCorrige ? `${r.titre} → ${r.titreCorrige}` : r.titre),
+          el('div', { class: 'discret' }, quand, ' · ', el('a', { href: r.lienGoogle, target: '_blank', rel: 'noopener' }, 'Google Agenda')),
+          el('ul', {},
+            r.changements.map(c => el('li', {}, c)),
+            r.aVerifier.map(a => el('li', { class: 'a-verifier' }, '⚠️ À corriger à la main : ' + a))),
+          r.changements.length > 0 && el('details', {}, el('summary', {}, 'Aperçu de la description'),
+            el('div', { class: 'apercu' },
+              el('div', {}, el('strong', {}, 'Avant'), el('pre', {}, r.avant || '(vide)')),
+              el('div', {}, el('strong', {}, 'Après'), el('pre', {}, r.apres || '(vide)'))))
+        ));
+      });
+      liste.append(section);
+    });
+    majBoutonAppliquer();
+  }
+
+  function selectionCorrections() {
+    return Array.from(document.querySelectorAll('#liste-corrections input[data-id]:checked'))
+      .map(c => ({ calendrier: c.dataset.calendrier, id: c.dataset.id }));
+  }
+
+  function majBoutonAppliquer() {
+    const n = selectionCorrections().length;
+    $('#btn-appliquer').disabled = !n;
+    $('#btn-appliquer').textContent = n ? `Appliquer ${n} correction(s)` : 'Appliquer les corrections cochées';
+  }
+
+  function appliquerCorrections() {
+    const selection = selectionCorrections();
+    confirmerSuppression(`Réécrire le titre et la description de ${selection.length} évènement(s) dans Google Agenda ? ` +
+      'Chaque modification est notée dans le journal.', () => {
+      $('#corrections-statut').textContent = 'Écriture dans Google Agenda…';
+      return appel('appliquerCorrections', selection).then(r => {
+        return analyserCorrections().then(() => {
+          $('#corrections-statut').textContent = `✅ ${r.corriges} évènement(s) corrigé(s).` +
+            (r.erreurs.length ? ` ❌ ${r.erreurs.length} erreur(s) : ${r.erreurs.join(' ; ')}` : '');
+          chargerMois();
+        });
+      });
+    }, 'Appliquer');
+  }
+
   // ---------- Branchements ----------
   $('#mois-precedent').addEventListener('click', () => {
     if (--etat.mois < 0) { etat.mois = 11; etat.annee--; }
@@ -594,6 +701,10 @@
   });
   $('#btn-annuler').addEventListener('click', () => $('#dlg-form').close());
   $('#btn-charte').addEventListener('click', ouvrirCharte);
+  $('#btn-corrections').addEventListener('click', ouvrirCorrections);
+  $('#corrections-fermer').addEventListener('click', () => $('#dlg-corrections').close());
+  $('#form-corrections').addEventListener('submit', analyserCorrections);
+  $('#btn-appliquer').addEventListener('click', appliquerCorrections);
   $('#charte-fermer').addEventListener('click', () => $('#dlg-charte').close());
   $('#btn-nouveau-modele').addEventListener('click', nouveauModele);
   $('#btn-nouveau-texte').addEventListener('click', () => ouvrirTexte(null));

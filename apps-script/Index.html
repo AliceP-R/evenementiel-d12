@@ -11,6 +11,7 @@
     <div class="entete-droite">
       <span id="utilisateur" class="discret"></span>
       <button type="button" class="btn btn-lien" id="btn-charte">🎨 Charte</button>
+      <button type="button" class="btn btn-lien" id="btn-corrections">🧹 Corriger en lot</button>
       <button type="button" class="btn btn-lien" id="btn-journal">📜 Journal</button>
     </div>
   </header>
@@ -204,6 +205,25 @@
     <p id="charte-statut" class="statut" role="status"></p>
     <div class="actions">
       <button type="button" class="btn btn-plein" id="charte-fermer">Fermer</button>
+    </div>
+  </dialog>
+
+  <!-- Correction en lot : remettre les évènements au format de la charte -->
+  <dialog id="dlg-corrections" class="large" aria-labelledby="corrections-titre">
+    <h2 id="corrections-titre">🧹 Corriger en lot</h2>
+    <p class="discret">L'outil propose les corrections de la charte (docs/formats-descriptions.md) qu'il sait faire seul.
+      Vérifie l'aperçu, coche ce que tu valides, puis applique : seuls le titre et la description changent dans Google Agenda.
+      Une série est corrigée en entier. Rien n'est écrit avant « Appliquer ».</p>
+    <form id="form-corrections" class="barre" novalidate>
+      <label>Du<input type="date" name="debut" required></label>
+      <label>Au<input type="date" name="fin" required></label>
+      <button type="submit" class="btn btn-plein" id="btn-analyser">🔎 Analyser</button>
+    </form>
+    <p id="corrections-statut" class="statut" role="status"></p>
+    <div id="liste-corrections"></div>
+    <div class="actions">
+      <button type="button" class="btn" id="corrections-fermer">Fermer</button>
+      <button type="button" class="btn btn-plein" id="btn-appliquer" disabled>Appliquer les corrections cochées</button>
     </div>
   </dialog>
 
