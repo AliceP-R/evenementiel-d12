@@ -153,12 +153,13 @@ Pour la S.A.D, on ajoute en tête : `Passez une soirée jeux & puzzles en bonne 
 
 **Soirée Découverte** (`colorId` 7)
 
-- Titre : `Soirée Découverte - <Jeu>`, ex. `Soirée Découverte - Le Conseil d'Anderian`
+- Titre : `Soirée Découverte - <Jeu>`, suivi de `, avec les auteurs`, `, avec les autrices` ou `, avec les auteur·ices`
+  quand ils ou elles sont là, ex. `Soirée Découverte - Le Conseil d'Anderian, avec les auteurs`
+- Les auteur·ices étant dans le titre, pas de ligne `Animé par :` qui le répète. Elle ne sert que pour donner leurs noms.
 
 ```
 <Présentation du jeu en 2 ou 3 phrases>
 
-Animé par : les auteurs du jeu
 Places : <nombre>, inscription obligatoire
 Tarif : tarifs et fonctionnement habituels du bar
 ```
