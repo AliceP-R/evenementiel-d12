@@ -64,9 +64,10 @@ test('« COMPLET » dans le texte : Places complet, bouton masqué', () => {
   assert.match(C.construireDescription(r.vue), /Places : complet[\s\S]*Inscription : aucune/);
 });
 
-test('Ligue Ludique non corrigée, textes d\'attente et couleurs hors catégorie signalés', () => {
+test('Ligue Ludique ni corrigée ni signalée, textes d\'attente et couleurs hors catégorie signalés', () => {
   const ligue = corriger(evenement('jdr', '11', 'JDR - Ligue', 'Inscription : https://ligue.fr/x'));
   assert.equal(ligue.changements.length, 0);
+  assert.equal(ligue.aVerifier.length, 0);
   assert.equal(ligue.vue.titre, 'JDR - Ligue');
   assert.ok(corriger(evenement('jds', '7', 'Soirée Découverte - X', '[Texte de présentation]', { tarif: { choix: 'habituel' } }))
     .aVerifier.some(a => /attente/.test(a)));

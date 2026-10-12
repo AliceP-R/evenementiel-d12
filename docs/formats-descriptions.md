@@ -339,9 +339,11 @@ qu'il sait faire seul, avec un aperçu avant / après. On coche ce qu'on valide 
 | 1re ligne qui répète le titre, horaires, « Pour vous inscrire… », « View Apollo event » | Textes d'attente « [Texte de présentation] », « (X places) » |
 | Places écrites à la main (`16 places`, `(16 places)`, `Places : 16`, `COMPLET`) → champ Places | Ligne `Places :` dans un autre format |
 | `Prix :` / `Tarif :` → champ Tarif (« 18 € ») ; tarif de la charte ajouté s'il manque (BOTC, Tables Ouvertes, Découverte, Créneau Libre, Vadrouilles & Magie, OS & Initiation ; pas sur un évènement privé) | Classement d'un évènement accueilli en Évènement externe (ex. Machicoulis) |
-| `Inscription : aucune` inutile (catégorie sans bouton) ou qui masque le bouton du Créneau Libre | Ligue Ludique : laissée à la routine Claude |
+| `Inscription : aucune` inutile (catégorie sans bouton) ou qui masque le bouton du Créneau Libre | |
 | Réservation Client : phrase fixe en public, l'ancien texte (nom du client) passe en interne | |
 | `18€` → `18 €`, `.e.s` → `·es` ; libellés internes vides (`Notes :`) | |
+
+Les créneaux de la Ligue Ludique n'apparaissent pas dans la correction en lot : ils sont écrits par la routine Claude.
 
 ## 6. État des lieux (août à décembre 2026)
 

@@ -35,10 +35,8 @@ function corrigerEvenement(vue) {
   const noter = (avant, apres, message) => { if (avant !== apres) changements.push(message); return apres; };
 
   if (v.colorId && !categorie) aVerifier.push(`Couleur ${v.colorId} hors catégorie : choisir une catégorie`);
-  if (v.colorId === '11' && v.calendrier === 'jdr') {
-    aVerifier.push('Ligue Ludique : écrit par la routine Claude, non corrigé ici');
-    return { vue: v, changements, aVerifier };
-  }
+  // Ligue Ludique : écrite par la routine Claude, ni corrigée ni listée ici
+  if (v.colorId === '11' && v.calendrier === 'jdr') return { vue: v, changements, aVerifier };
 
   // ---- Titre (charte § 2.5 et état des lieux) ----
   let titre = v.titre;
