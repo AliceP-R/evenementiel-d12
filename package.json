@@ -5,9 +5,9 @@
     "test": "node --test tests/*.test.js",
     "connexion": "clasp login",
     "envoyer": "clasp push --force",
-    "deployer": "npm run envoyer && clasp deploy --deploymentId AKfycbze5U_fOGKcIdlryhaDd8DuwZVP1hbws4DZSkmc9dxZT1Zs5nqLDRWBL1Qkw2yCds_yMA --description \"Mise à jour depuis le dépôt\""
+    "deployer": "npm run envoyer && clasp update-deployment AKfycbze5U_fOGKcIdlryhaDd8DuwZVP1hbws4DZSkmc9dxZT1Zs5nqLDRWBL1Qkw2yCds_yMA --description \"Mise à jour depuis le dépôt\""
   },
   "devDependencies": {
-    "@google/clasp": "2.4.2"
+    "@google/clasp": "3.1.0"
   }
 }
