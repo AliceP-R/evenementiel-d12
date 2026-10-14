@@ -51,6 +51,14 @@ function corrigerEvenement(vue) {
     titre = noter(titre, /^\s*(réservation client|client)\s*$/i.test(titre) ? 'Réservation Client' : titre, 'Titre : « Réservation Client »');
   }
   v.titre = titre.trim();
+  // Réservation Client et Créneau Libre : le site les distingue par la couleur seule (salle bloquée ou réservable).
+  // Un titre de l'autre catégorie (ex. date modifiée d'une série écrasée par Google) n'est pas corrigé seul : il faut le client.
+  if (v.calendrier === 'jdr' && v.colorId === '2' && /cr[ée]neau\s+libre/i.test(v.titre)) {
+    aVerifier.push('Couleur Réservation Client mais titre « Créneau Libre » : remettre « Réservation Client » et le client en interne, ou la couleur Créneau Libre');
+  }
+  if (v.calendrier === 'jdr' && v.colorId === '3' && /r[ée]servation\s+client|^\s*client\s*$/i.test(v.titre)) {
+    aVerifier.push('Couleur Créneau Libre mais titre « Réservation Client » : la salle s\'affiche réservable, choisir la couleur Réservation Client');
+  }
 
   // ---- Description publique ----
   let lignes = v.descriptionPublique ? v.descriptionPublique.split('\n') : [];

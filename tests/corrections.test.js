@@ -87,3 +87,15 @@ test('écriture inclusive et prix, sans toucher aux liens', () => {
     'Les invité.e.s sont accompagné.e.s. 5€.\nhttps://site.fr/les.e.s'));
   assert.equal(r.vue.descriptionPublique, 'Les invité·es sont accompagné·es. 5 €.\nhttps://site.fr/les.e.s');
 });
+
+test('Réservation Client et Créneau Libre : un titre de l\'autre catégorie est signalé, jamais corrigé seul', () => {
+  const client = corriger(evenement('jdr', '2', 'Créneau Libre', '📌 Cette session est réservée par un client.\n\nTarif : consommation minimum de 90 €'));
+  assert.equal(client.vue.titre, 'Créneau Libre');
+  assert.equal(client.vue.colorId, '2');
+  assert.ok(client.aVerifier.some(a => /titre « Créneau Libre »/.test(a)));
+  const libre = corriger(evenement('jdr', '3', 'Réservation client', 'Tarif : consommation minimum de 90 €'));
+  assert.equal(libre.vue.colorId, '3');
+  assert.ok(libre.aVerifier.some(a => /titre « Réservation Client »/.test(a)));
+  assert.notEqual(libre.vue.descriptionPublique, '📌 Cette session est réservée par un client.');
+  assert.deepEqual(corriger(evenement('jdr', '3', 'Créneau Libre', 'Tarif : consommation minimum de 90 €')).aVerifier, []);
+});
