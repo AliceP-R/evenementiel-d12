@@ -63,6 +63,10 @@
       </div>
 
       <label>Titre<input name="titre" required maxlength="200"></label>
+      <label id="bloc-annulation" class="encart" hidden>🚫 Raison de l'annulation (affichée sur le site)
+        <input name="annulation" maxlength="300">
+        <small class="discret">Pour rétablir l'évènement : vider ce champ et retirer « ANNULÉ - » du titre.</small>
+      </label>
 
       <div class="grille" id="bloc-date">
         <label>Date<input type="date" name="date" required></label>
@@ -264,6 +268,31 @@
       <button type="button" class="btn" data-portee="serie">Toute la série</button>
       <button type="button" class="btn btn-plein" data-portee="occurrence">Cette date seulement</button>
     </div>
+  </dialog>
+
+  <!-- Annulation : raison, puis où l'annuler à la main -->
+  <dialog id="dlg-annulation" aria-labelledby="annulation-titre">
+    <form id="form-annulation" novalidate>
+      <h2 id="annulation-titre">🚫 Annuler l'évènement</h2>
+      <div id="annulation-etape-raison">
+        <p id="annulation-texte"></p>
+        <p class="discret">L'évènement reste dans l'agenda : son titre commence par « ANNULÉ - », la raison s'affiche sur le site
+          et le bouton d'inscription disparaît. Qui a annulé et quand est noté dans les notes internes et le journal.</p>
+        <label>Raison de l'annulation (affichée sur le site)
+          <textarea name="raison" rows="3" required maxlength="300" placeholder="Ex. : l'animateur est malade, la soirée est reportée au 24 octobre."></textarea>
+        </label>
+      </div>
+      <div id="annulation-etape-lieux" hidden>
+        <p>✅ Annulé dans Google Agenda (le site est à jour). <strong>À annuler aussi à la main :</strong></p>
+        <ul id="annulation-lieux" class="lieux-annulation"></ul>
+        <p class="discret">Ces lieux sont aussi notés dans les notes internes de l'évènement (« À annuler à la main »).</p>
+      </div>
+      <p id="annulation-erreur" class="erreur" role="alert" hidden></p>
+      <div class="actions">
+        <button type="button" class="btn" id="annulation-fermer">Retour</button>
+        <button type="submit" class="btn btn-danger" id="annulation-ok">Annuler l'évènement</button>
+      </div>
+    </form>
   </dialog>
 
   <!-- Confirmation de suppression -->

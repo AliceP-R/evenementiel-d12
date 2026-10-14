@@ -14,6 +14,8 @@
     texteEnCours: null  // texte type ouvert dans son formulaire
   };
   const CANAUX = ['vibes', 'meetup', 'discord', 'instagram'];
+  // Même règle que TITRE_ANNULE (Conventions.gs)
+  const TITRE_ANNULE = /^\s*ANNUL[ÉE]E?(?![\p{L}])\s*[-–—:]?\s*/iu;
 
   const $ = sel => document.querySelector(sel);
   const form = $('#form');
@@ -113,19 +115,20 @@
     const horaire = ev.journeeEntiere
       ? (ev.dateFin && ev.dateFin !== ev.date ? `Jusqu'au ${versDate(ev.dateFin).toLocaleDateString('fr-FR')}` : 'Journée')
       : `${heureFr(ev.heureDebut)} – ${heureFr(ev.heureFin)}`;
-    return el('article', { class: 'evt' + (passe ? ' passe' : ''), style: `border-left-color: ${cat ? cat.teinte : 'var(--texte-doux)'}` },
+    return el('article', { class: 'evt' + (passe ? ' passe' : '') + (ev.annule ? ' annule' : ''), style: `border-left-color: ${cat ? cat.teinte : 'var(--texte-doux)'}` },
       el('div', { class: 'evt-heure' }, horaire),
       el('div', { class: 'evt-corps' },
         el('div', { class: 'evt-titre' }, ev.titre || '(sans titre)'),
         el('div', { class: 'badges' },
+          ev.annule && el('span', { class: 'badge badge-annule', title: ev.annulation }, '🚫 Annulé'),
           el('span', { class: 'badge' }, ev.calendrier === 'jds' ? '🎯 JDS' : '⚔️ JDR'),
           el('span', { class: 'badge' }, cat ? cat.nom : 'Sans catégorie'),
           ev.visibilite === 'privee' && el('span', { class: 'badge' }, '🔒 Privé'),
           ev.serieId && el('span', { class: 'badge' }, '🔁 Série'),
           ev.inscription.mode === 'externe' && el('span', { class: 'badge' }, '🔗 Inscription externe'),
-          ev.inscription.mode === 'aucune' && el('span', { class: 'badge' }, '🚫 Pas d\'inscription'),
+          !ev.annule && ev.inscription.mode === 'aucune' && el('span', { class: 'badge' }, '🚫 Pas d\'inscription'),
           ev.places.gerer && el('span', { class: 'badge' }, ev.places.complet ? '🎟️ Complet' : '🎟️ ' + ev.places.nombre + ' places'),
-          !ev.tarif.choix && (categorieDe(ev) || {}).tarifObligatoire && el('span', { class: 'badge' }, '⚠️ Tarif manquant'),
+          !ev.annule && !ev.tarif.choix && (categorieDe(ev) || {}).tarifObligatoire && el('span', { class: 'badge' }, '⚠️ Tarif manquant'),
           ev.notesInternes && el('span', { class: 'badge', title: ev.notesInternes }, '🔐 Notes internes')
         )
       ),
@@ -134,6 +137,7 @@
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => modifier(ev) }, '✏️ Modifier'),
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => dupliquer(ev) }, '📄 Dupliquer'),
         el('button', { type: 'button', class: 'btn btn-petit', title: 'En faire un modèle', onclick: () => modeleDepuisEvenement(ev) }, '📌 Modèle'),
+        !ev.annule && !passe && el('button', { type: 'button', class: 'btn btn-petit', onclick: () => annuler(ev) }, '🚫 Annuler'),
         el('button', { type: 'button', class: 'btn btn-petit', onclick: () => supprimer(ev) }, '🗑️ Supprimer')
       )
     );
@@ -224,6 +228,8 @@
     form.calendrier.value = ev.calendrier;
     remplirCategories(ev.calendrier, ev.colorId);
     form.titre.value = ev.titre || '';
+    form.annulation.value = ev.annulation || '';
+    $('#bloc-annulation').hidden = etat.mode === 'modele' || !(ev.annule || ev.annulation);
     form.date.value = ev.date || '';
     form.journeeEntiere.checked = !!ev.journeeEntiere;
     form.heureDebut.value = ev.heureDebut || '19:00';
@@ -263,6 +269,7 @@
       calendrier: form.calendrier.value,
       colorId: form.colorId.value,
       titre: form.titre.value,
+      annulation: form.annulation.value,
       date: form.date.value,
       journeeEntiere: form.journeeEntiere.checked,
       heureDebut: form.heureDebut.value,
@@ -334,7 +341,7 @@
 
   function dupliquer(ev) {
     etat.portee = null;
-    const copie = Object.assign({}, ev, { id: '', serieId: '', recurrence: { frequence: 'aucune', fin: '' } });
+    const copie = Object.assign({}, sansAnnulation(ev), { id: '', serieId: '', recurrence: { frequence: 'aucune', fin: '' } });
     ouvrirFormulaire(copie, 'Dupliquer l\'évènement', 'Copie de « ' + ev.titre + ' » : change la date puis enregistre.');
   }
 
@@ -369,6 +376,76 @@
           .then(() => chargerMois())
           .then(() => { $('#statut').textContent = '🗑️ Supprimé.'; }));
     });
+  }
+
+  // ---------- Annulation ----------
+  const titreSansAnnulation = titre => String(titre || '').replace(TITRE_ANNULE, '').trim();
+
+  // Copie d'un évènement annulé (dupliquer, en faire un modèle) : sans « ANNULÉ - » ni raison
+  function sansAnnulation(ev) {
+    if (!ev.annule && !ev.annulation) return ev;
+    const notes = (ev.notesInternes || '').split('\n')
+      .filter(l => !/^\s*(Annulé le .* par |À annuler à la main :)/.test(l)).join('\n').trim();
+    return Object.assign({}, ev, { titre: titreSansAnnulation(ev.titre), annule: false, annulation: '', notesInternes: notes });
+  }
+
+  function annuler(ev) {
+    const choix = ev.serieId ? demanderPortee(ev, 'Annuler') : Promise.resolve('occurrence');
+    choix.then(portee => {
+      if (portee !== 'occurrence' && portee !== 'serie') return;
+      const f = $('#form-annulation');
+      f.reset();
+      f.dataset.calendrier = ev.calendrier;
+      f.dataset.id = ev.id;
+      f.dataset.portee = portee;
+      $('#annulation-texte').textContent = portee === 'serie'
+        ? 'Annuler toute la série « ' + ev.titre + ' » ? Les dates déjà modifiées une par une ne changent pas : les annuler une par une.'
+        : 'Annuler « ' + ev.titre + ' » du ' + jourLong(ev.date) + ' ?';
+      $('#annulation-etape-raison').hidden = false;
+      $('#annulation-etape-lieux').hidden = true;
+      $('#annulation-erreur').hidden = true;
+      $('#annulation-ok').hidden = false;
+      $('#annulation-fermer').textContent = 'Retour';
+      $('#dlg-annulation').showModal();
+      f.raison.focus();
+    });
+  }
+
+  function confirmerAnnulation(e) {
+    e.preventDefault();
+    const f = $('#form-annulation');
+    const erreur = $('#annulation-erreur');
+    if (!f.raison.value.trim()) {
+      erreur.textContent = 'Indique la raison de l\'annulation.';
+      erreur.hidden = false;
+      return;
+    }
+    const bouton = $('#annulation-ok');
+    bouton.disabled = true;
+    bouton.textContent = 'Annulation…';
+    erreur.hidden = true;
+    appel('annulerEvenement', f.dataset.calendrier, f.dataset.id, f.dataset.portee, f.raison.value)
+      .then(r => {
+        const lieux = $('#annulation-lieux');
+        lieux.textContent = '';
+        r.lieux.forEach(l => lieux.append(el('li', {},
+          el('label', { class: 'case' }, el('input', { type: 'checkbox' }), ' ', el('strong', {}, l.nom), ' : ',
+            l.url ? el('a', { href: l.url, target: '_blank', rel: 'noopener' }, l.url)
+              : el('span', { class: 'discret' }, 'pas de lien enregistré, vérifier s\'il y a été publié')))));
+        $('#annulation-etape-raison').hidden = true;
+        $('#annulation-etape-lieux').hidden = false;
+        bouton.hidden = true;
+        $('#annulation-fermer').textContent = 'Fermer';
+        return chargerMois().then(() => { $('#statut').textContent = '🚫 Annulé : « ' + r.titre + ' ».'; });
+      })
+      .catch(err => {
+        erreur.textContent = err.message;
+        erreur.hidden = false;
+      })
+      .finally(() => {
+        bouton.disabled = false;
+        bouton.textContent = 'Annuler l\'évènement';
+      });
   }
 
   // Demande confirmation, puis lance action() (une promesse)
@@ -514,7 +591,7 @@
 
   function modeleDepuisEvenement(ev) {
     etat.portee = null;
-    const modele = Object.assign({}, ev, { id: '', nom: ev.titre });
+    const modele = Object.assign({}, sansAnnulation(ev), { id: '', nom: titreSansAnnulation(ev.titre) });
     ouvrirFormulaire(modele, 'Nouveau modèle', 'À partir de « ' + ev.titre + ' » : vérifie le nom puis enregistre. La date n\'est pas gardée.', { mode: 'modele' });
   }
 
@@ -858,6 +935,8 @@
   $('#choix-modele').addEventListener('change', appliquerModele);
   $('#inserer-texte').addEventListener('change', insererTexte);
   $('#suppr-annuler').addEventListener('click', () => $('#dlg-suppr').close());
+  $('#form-annulation').addEventListener('submit', confirmerAnnulation);
+  $('#annulation-fermer').addEventListener('click', () => $('#dlg-annulation').close());
   form.addEventListener('submit', enregistrer);
   form.calendrier.addEventListener('change', () => { remplirCategories(form.calendrier.value, ''); appliquerDefautsCategorie(); });
   form.colorId.addEventListener('change', () => { majAideCategorie(); appliquerDefautsCategorie(); });

@@ -298,9 +298,12 @@ Myrtille n'est utilisée par aucun évènement d'août à décembre. Créer la c
 
 ### 3.4 Sans catégorie
 
-Réservé aux **privatisations** et aux **fermetures** :
+Réservé aux **fermetures** et, en JDS, aux **privatisations** :
 
 - Titre : `Privatisation - <Nom>` ou `Fermeture estivale`
+- En JDR, il n'y a pas de privatisation de la salle : la salle louée par quelqu'un est une **Réservation Client**
+  (`Réservation Client` ou `Option Client`). Une privatisation du bar entier apparaît en JDR comme un
+  **Évènement externe** (Myrtille), qui bloque la salle.
 - Visibilité : **au choix** (cf. § 3.5).
 - Pas de description publique ; en interne : `Contact :` et `Notes :`.
 
@@ -314,7 +317,7 @@ Le calendrier sert aussi à l'équipe : une prestation réservée par quelqu'un 
 | Publique | Affiché, avec sa description publique | La salle est bloquée |
 | Privée | Invisible | **La salle paraît libre** |
 
-En JDR, une prestation privée est **toujours une Réservation Client**, jamais un évènement externe ou sans catégorie
+En JDR, une prestation privée est **toujours une Réservation Client** en visibilité publique, jamais un évènement
 en privé : la salle est bloquée, et le public ne voit que « 📌 Cette session est réservée par un client. », sans savoir
 qui ni pour quoi. (Un évènement privé du calendrier JDR ne bloquerait pas la salle, cf. specs § 4.4.)
 

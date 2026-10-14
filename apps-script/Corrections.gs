@@ -16,6 +16,36 @@ const TARIFS_PAR_DEFAUT = {
   }
 };
 
+// Titres typiques de chaque catégorie, par calendrier puis colorId, pour repérer un titre qui ne va pas avec sa couleur
+// (le site ne regarde que la couleur : salle bloquée ou réservable, bouton d'inscription…)
+const TITRES_PAR_CATEGORIE = {
+  jds: {
+    '3': /\bbotct?\b|blood\s+on\s+the\s+clock\s*tower/i,
+    '5': /\btables?\s+ouvertes?\b/i,
+    '7': /d[ée]couverte/i,
+    '9': /joueurs\s+anonymes|chess\s*bar|machicoulis|sapphics/i // organisateurs accueillis (charte § 3.3)
+  },
+  jdr: {
+    '2': /r[ée]servation\s+client|^\s*client\s*$|option\s+client/i,
+    '3': /cr[ée]neau\s+libre/i,
+    '4': /vadrouilles?\b|\bv\s*&\s*m\b/i,
+    '5': /\bini?tiation\b|\bone[\s-]?shot\b|\bos\b/i,
+    '8': /\bcampagne\b/i,
+    '9': /privatisation/i, // en JDR, la privatisation du bar est un Évènement externe ; la salle louée, une Réservation Client
+    '11': /ligue\s+ludique/i
+  }
+};
+
+// Catégories dont le titre a l'air (colorId), sauf la sienne : [] si le titre va avec la couleur ou n'évoque rien
+function categoriesDuTitre(calendrier, colorId, titre) {
+  const titres = TITRES_PAR_CATEGORIE[calendrier] || {};
+  if (titres[colorId] && titres[colorId].test(titre)) return [];
+  // « BOTC Privé », « Privatisation … » : pas une soirée publique à inscription (mais peut être un Évènement externe)
+  const prive = /\bpriv/i.test(titre);
+  return Object.keys(titres).filter(id => titres[id].test(titre)
+    && !(prive && (CATEGORIES[calendrier].find(c => c.colorId === id) || {}).bouton === 'inscription'));
+}
+
 // ---------- Fonctions pures (testées avec Node) ----------
 
 // Titre seul, sans emojis ni ponctuation, pour comparer à une 1re ligne de description
@@ -35,6 +65,23 @@ function corrigerEvenement(vue) {
   const noter = (avant, apres, message) => { if (avant !== apres) changements.push(message); return apres; };
 
   if (v.colorId && !categorie) aVerifier.push(`Couleur ${v.colorId} hors catégorie : choisir une catégorie`);
+  // Annulé : on n'y touche plus (le titre « ANNULÉ - » et « Inscription : aucune » sont voulus)
+  if (estAnnule(v.titre)) return { vue: v, changements, aVerifier };
+  // En JDR, un évènement privé est invisible : le site affiche la salle libre (charte § 3.5)
+  if (v.calendrier === 'jdr' && v.visibilite === 'privee') {
+    aVerifier.push('Privé en JDR : le site affiche la salle libre ce jour-là. Mettre en public (une réservation = Réservation Client, phrase fixe)');
+  }
+  // Titre d'une autre catégorie que sa couleur (ex. date modifiée d'une série écrasée par Google Agenda) :
+  // signalé, jamais corrigé seul (il faut savoir lequel des deux est juste, et le client pour une Réservation Client)
+  categoriesDuTitre(v.calendrier, v.colorId, v.titre).forEach(id => {
+    const autre = CATEGORIES[v.calendrier].find(c => c.colorId === id);
+    const couleur = categorie ? `Couleur « ${categorie.nom} »` : 'Sans catégorie';
+    let conseil = 'changer la couleur ou le titre';
+    if (id === '2') conseil = 'si c\'est une réservation, couleur Réservation Client et le client en interne';
+    else if (v.colorId === '2') conseil = 'si c\'est bien une réservation, titre « Réservation Client » et le client en interne';
+    if (categorie && categorie.salle === 'libre' && autre.salle === 'bloque') conseil += ' (pour l\'instant la salle s\'affiche réservable)';
+    aVerifier.push(`${couleur} mais titre de « ${autre.nom} » : ${conseil}`);
+  });
   // Ligue Ludique : écrite par la routine Claude, ni corrigée ni listée ici
   if (v.colorId === '11' && v.calendrier === 'jdr') return { vue: v, changements, aVerifier };
 
@@ -180,7 +227,10 @@ function appliquerCorrections(selection) {
       const ev = Calendar.Events.get(cal.id, id, { timeZone: FUSEAU });
       const c = corrigerEvenement(versVue_(calendrier, ev));
       if (!c.changements.length) return;
-      Calendar.Events.patch({ summary: c.vue.titre, description: construireDescription(c.vue) }, cal.id, id);
+      const patcher = () => Calendar.Events.patch({ summary: c.vue.titre, description: construireDescription(c.vue) }, cal.id, id);
+      // Série : ses dates modifiées (ex. Réservation Client sur un Créneau Libre) ne doivent pas reprendre ce texte
+      if (ev.recurrence && ev.recurrence.length) modifierSerie_(cal.id, id, patcher);
+      else patcher();
       journaliser_(email, 'Correction charte', calendrier, c.vue.titre, lireHoraires(ev.start, ev.end).date, id);
       corriges++;
     } catch (e) {

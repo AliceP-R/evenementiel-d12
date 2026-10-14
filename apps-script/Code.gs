@@ -92,6 +92,7 @@ function versVue_(type, ev) {
     id: ev.id,
     serieId: ev.recurringEventId || '',
     titre: ev.summary || '',
+    annule: estAnnule(ev.summary),
     colorId: ev.colorId ? String(ev.colorId) : '',
     visibilite: visibilite === 'private' || visibilite === 'confidential' ? 'privee' : 'publique',
     recurrence: lireRecurrence(ev.recurrence),
@@ -138,13 +139,41 @@ function enregistrerEvenement(f) {
     else delete ressource.recurrence;
   }
 
-  const resultat = f.id
-    ? Calendar.Events.update(ressource, cal.id, f.id)
-    : Calendar.Events.insert(ressource, cal.id);
+  const resultat = !f.id ? Calendar.Events.insert(ressource, cal.id)
+    : occurrence || !ressource.recurrence ? Calendar.Events.update(ressource, cal.id, f.id)
+    : modifierSerie_(cal.id, f.id, () => Calendar.Events.update(ressource, cal.id, f.id));
 
   const action = !f.id ? 'Création' : occurrence ? 'Modification (cette date)' : 'Modification';
   journaliser_(email, action, f.calendrier, ressource.summary, f.date, resultat.id);
   return resultat.id;
+}
+
+// Modifie une série (ecrire) sans perdre ses dates modifiées : Google Agenda leur réécrit le titre et la
+// description de la série. On note avant ce que chaque date a de propre, et on le remet après.
+function modifierSerie_(calendarId, serieId, ecrire) {
+  const serie = Calendar.Events.get(calendarId, serieId);
+  const datesModifiees = [];
+  const timeMax = new Date(Date.now() + 2 * 365 * 24 * 3600 * 1000).toISOString();
+  let pageToken;
+  do {
+    const reponse = Calendar.Events.instances(calendarId, serieId, { timeMax, maxResults: 250, pageToken });
+    (reponse.items || []).forEach(instance => {
+      if (instance.status === 'cancelled') return;
+      const champs = champsPropresALaDate(serie, instance);
+      if (Object.keys(champs).length) datesModifiees.push({ id: instance.id, champs });
+    });
+    pageToken = reponse.nextPageToken;
+  } while (pageToken);
+
+  const resultat = ecrire();
+  datesModifiees.forEach(d => {
+    try {
+      Calendar.Events.patch(d.champs, calendarId, d.id);
+    } catch (e) {
+      console.error(`Date modifiée ${d.id} non remise : ${e}`); // ex. date disparue si les horaires de la série ont changé
+    }
+  });
+  return resultat;
 }
 
 // Supprime un évènement. portee = 'serie' pour supprimer toute la série d'une occurrence.
@@ -156,6 +185,25 @@ function supprimerEvenement(type, id, portee) {
   Calendar.Events.remove(cal.id, cible);
   const date = lireHoraires(ev.start, ev.end).date;
   journaliser_(email, cible === id ? 'Suppression' : 'Suppression (toute la série)', type, ev.summary || '', date, cible);
+}
+
+// Annule un évènement sans le supprimer : titre « ANNULÉ - … », raison affichée sur le site, plus de bouton
+// d'inscription. Seuls le titre et la description changent. portee = 'serie' pour annuler toute la série.
+// Renvoie les lieux où l'annuler à la main (Meetup, Vibes, Discord), avec leur lien quand il est connu.
+function annulerEvenement(type, id, portee, raison) {
+  const email = verifierAcces_();
+  const cal = calendrier_(type);
+  const ev = Calendar.Events.get(cal.id, id, { timeZone: FUSEAU });
+  const cibleId = portee === 'serie' && ev.recurringEventId ? ev.recurringEventId : id;
+  const cible = cibleId === id ? ev : Calendar.Events.get(cal.id, cibleId, { timeZone: FUSEAU });
+  const vue = versVue_(type, cible);
+  if (vue.annule) throw new Error('Cet évènement est déjà annulé.');
+
+  const annule = annulerChamps(vue, raison, Utilities.formatDate(new Date(), FUSEAU, 'dd/MM/yyyy'), email);
+  Calendar.Events.patch({ summary: annule.titre, description: construireDescription(annule) }, cal.id, cibleId);
+  journaliser_(email, cibleId === id ? 'Annulation' : 'Annulation (toute la série)', type, annule.titre,
+    lireHoraires(ev.start, ev.end).date, cibleId);
+  return { titre: annule.titre, lieux: lieuxAAnnuler(vue) };
 }
 
 function valider_(f) {

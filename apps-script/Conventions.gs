@@ -5,6 +5,8 @@
 //
 // Format écrit dans la description :
 //
+//   Annulé : <raison>                     (évènement annulé, cf. Annulation)
+//
 //   <description publique>
 //   Places : 12, inscription obligatoire   (ou « Places : complet », cf. champs Places)
 //   Tarif : <tarif>                        (cf. champ Tarif)
@@ -30,6 +32,17 @@ const MODES_PLACES = { obligatoire: 'inscription obligatoire', recommandee: 'ins
 
 // Lignes de la description publique qui « collent » aux lignes Places / Tarif (même paragraphe)
 const LIGNE_PRATIQUE = /^\s*(scénario|niveau|animé par|organisé par|places|tarif)\s*:/i;
+
+// Évènement annulé : titre « ANNULÉ - … » et 1re ligne publique « Annulé : <raison> »
+const PREFIXE_ANNULE = 'ANNULÉ - ';
+const TITRE_ANNULE = /^\s*ANNUL[ÉE]E?(?![\p{L}])\s*[-–—:]?\s*/iu;
+const LIGNE_ANNULATION = /^\s*annul[ée]e?\s*:\s*(.*\S)\s*$/i;
+// Où l'évènement peut avoir été publié à la main (et donc où l'annuler à la main)
+const LIEUX_A_ANNULER = [
+  { canal: 'meetup', nom: 'Meetup', domaine: /meetup\.com/i },
+  { canal: 'vibes', nom: 'Vibes', domaine: /vibes/i },
+  { canal: 'discord', nom: 'Discord', domaine: /discord(?:app)?\.(?:com|gg)/i }
+];
 
 // Même tolérance que stripInternal() dans le Code.gs du site public
 const MARQUEUR_INTERNE = /(?:-{2,}|[–—]+)\s*interne\s*(?:-{2,}|[–—]+)/i;
@@ -83,9 +96,12 @@ function lireDescription(description) {
   const canaux = { vibes: '', meetup: '', discord: '', instagram: '' };
   const places = placesVides();
   const tarif = { choix: '', montant: '', texte: '' };
+  let annulation = '';
   const lignes = [];
 
   publique.split('\n').forEach(ligne => {
+    const a = ligne.match(LIGNE_ANNULATION);
+    if (a && !annulation) { annulation = a[1]; return; }
     const p = ligne.match(/^\s*places\s*:\s*(.*)$/i);
     if (p && !places.gerer) {
       const lues = lirePlaces(p[1]);
@@ -117,7 +133,8 @@ function lireDescription(description) {
     inscription,
     canaux,
     places,
-    tarif
+    tarif,
+    annulation
   };
 }
 
@@ -168,6 +185,12 @@ function texteTarif(tarif) {
 // Champs du formulaire → description Google Agenda
 function construireDescription(champs) {
   const blocs = [];
+  // Annulé : la raison en premier, plus de bouton, de liens par canal ni de places
+  const annulation = String(champs.annulation || '').replace(/\s+/g, ' ').trim();
+  if (annulation) {
+    blocs.push('Annulé : ' + echapperHtml(annulation));
+    champs = Object.assign({}, champs, { inscription: { mode: 'aucune' }, canaux: {}, places: placesVides() });
+  }
   let publique = (champs.descriptionPublique || '').trim();
 
   // Places et Tarif : à la suite des lignes pratiques (Animé par…), sinon dans un paragraphe à part
@@ -204,6 +227,46 @@ function construireDescription(champs) {
   if (notes) blocs.push('---interne---\n' + echapperHtml(notes));
 
   return blocs.join('\n\n');
+}
+
+// ---------- Annulation ----------
+
+function estAnnule(titre) {
+  return TITRE_ANNULE.test(String(titre || ''));
+}
+
+function titreAnnule(titre) {
+  return PREFIXE_ANNULE + titreSansAnnulation(titre);
+}
+
+function titreSansAnnulation(titre) {
+  return String(titre || '').replace(TITRE_ANNULE, '').trim();
+}
+
+// Liens Meetup, Vibes, Discord connus pour cet évènement (liens par canal, sinon notes internes ou description).
+// Tous les lieux sont renvoyés, avec url '' quand aucun lien n'est connu : à vérifier à la main.
+function lieuxAAnnuler(vue) {
+  const textes = [vue.notesInternes || '', vue.descriptionPublique || ''].join('\n');
+  const liens = textes.match(/https?:\/\/[^\s<>"']+/g) || [];
+  return LIEUX_A_ANNULER.map(l => ({
+    canal: l.canal,
+    nom: l.nom,
+    url: ((vue.canaux || {})[l.canal] || '').trim() || liens.find(u => l.domaine.test(u)) || ''
+  }));
+}
+
+// Champs d'un évènement → mêmes champs, annulé : titre « ANNULÉ - … », raison en public,
+// et en interne qui a annulé, quand, et les lieux où l'annuler à la main (avec leurs liens, qui disparaissent du public).
+function annulerChamps(vue, raison, quand, qui) {
+  const r = String(raison || '').replace(/\s+/g, ' ').trim();
+  if (!r) throw new Error("Indique la raison de l'annulation.");
+  const lieux = lieuxAAnnuler(vue).map(l => l.nom + ' ⏳' + (l.url ? ' ' + l.url : '')).join(' · ');
+  const notes = [`Annulé le ${quand} par ${qui} : ${r}`, 'À annuler à la main : ' + lieux, (vue.notesInternes || '').trim()];
+  return Object.assign({}, vue, {
+    titre: titreAnnule(vue.titre),
+    annulation: r,
+    notesInternes: notes.filter(Boolean).join('\n')
+  });
 }
 
 // ---------- Horaires ----------
@@ -288,4 +351,18 @@ function construireRecurrence(rec, journeeEntiere) {
     regle += ';UNTIL=' + (journeeEntiere ? compact : compact + 'T235959Z');
   }
   return [regle];
+}
+
+// ---------- Dates modifiées d'une série ----------
+
+// Champs qu'une date modifiée a changés par rapport à sa série (titre, description, couleur).
+// Google Agenda les écrase quand on modifie la série (ex. une Réservation Client posée sur un Créneau Libre
+// redevient « Créneau Libre ») : on les remet ensuite. Renvoie {} si la date suit la série.
+function champsPropresALaDate(serie, instance) {
+  const propres = {};
+  ['summary', 'description', 'colorId'].forEach(champ => {
+    const valeur = instance[champ] ? String(instance[champ]) : '';
+    if (valeur !== (serie[champ] ? String(serie[champ]) : '') && (valeur || champ !== 'colorId')) propres[champ] = valeur;
+  });
+  return propres;
 }

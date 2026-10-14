@@ -74,7 +74,8 @@ test('aller-retour construire → lire', () => {
     inscription: { mode: 'normal', url: '' },
     canaux: { vibes: 'https://vibes.lgbt/a', meetup: '', discord: 'https://discord.com/c', instagram: '' },
     places: SANS_PLACES,
-    tarif: SANS_TARIF
+    tarif: SANS_TARIF,
+    annulation: ''
   };
   assert.deepEqual(plain(C.lireDescription(C.construireDescription(champs))), champs);
 
@@ -113,7 +114,8 @@ test('lireDescription : vide', () => {
     inscription: { mode: 'normal', url: '' },
     canaux: { vibes: '', meetup: '', discord: '', instagram: '' },
     places: SANS_PLACES,
-    tarif: SANS_TARIF
+    tarif: SANS_TARIF,
+    annulation: ''
   });
 });
 
@@ -144,7 +146,8 @@ test('Places : complet masque le bouton, et se relit comme « bouton habituel + 
     inscription: { mode: 'normal', url: '' },
     canaux: { vibes: '', meetup: '', discord: '', instagram: '' },
     places: { gerer: true, nombre: '', inscription: 'obligatoire', complet: true },
-    tarif: SANS_TARIF
+    tarif: SANS_TARIF,
+    annulation: ''
   };
   const d = C.construireDescription(champs);
   assert.equal(d, 'Campagne de D&amp;D.\n\nAnimé par : Balthazar\nPlaces : complet\n\nInscription : aucune\n\n' +
@@ -220,4 +223,62 @@ test('récurrence : lire', () => {
   assert.equal(C.lireRecurrence(['RRULE:FREQ=WEEKLY;BYDAY=TH,SA']).frequence, 'autre');
   assert.equal(C.lireRecurrence(['RRULE:FREQ=WEEKLY;COUNT=5']).frequence, 'autre');
   assert.equal(C.lireRecurrence(['RRULE:FREQ=WEEKLY', 'EXDATE:20261010T190000Z']).frequence, 'autre');
+});
+
+test('champsPropresALaDate : ce que la date modifiée a changé par rapport à sa série', () => {
+  const serie = { summary: 'Créneau Libre', description: 'Tarif : consommation minimum de 90 €', colorId: '3' };
+  assert.deepEqual(plain(C.champsPropresALaDate(serie, Object.assign({ id: 'a_1' }, serie))), {});
+  assert.deepEqual(plain(C.champsPropresALaDate(serie, {
+    summary: 'Réservation Client', description: '📌 Cette session est réservée par un client.\n\n---interne---\nClient : Dupont', colorId: '2'
+  })), {
+    summary: 'Réservation Client', description: '📌 Cette session est réservée par un client.\n\n---interne---\nClient : Dupont', colorId: '2'
+  });
+  // Couleur absente : la date suit celle de la série (on n'écrit pas de couleur vide)
+  assert.deepEqual(plain(C.champsPropresALaDate(serie, { summary: 'Créneau Libre', description: '' })), { description: '' });
+});
+
+test('Annulation : titre « ANNULÉ - », raison en public, plus de bouton, lieux à annuler en interne', () => {
+  const vue = {
+    titre: 'Soirée BOTC',
+    descriptionPublique: 'Un jeu de mystère.\n\nAnimé par : Martin',
+    notesInternes: 'Publié : Discord ✅ 03/10 https://discord.com/channels/1/2 · Vibes ⏳',
+    inscription: { mode: 'normal', url: '' },
+    canaux: { vibes: '', meetup: 'https://www.meetup.com/au-de12/events/42', discord: '', instagram: '' },
+    places: { gerer: true, nombre: '12', inscription: 'obligatoire', complet: false },
+    tarif: { choix: 'formule', montant: '', texte: '' },
+    annulation: ''
+  };
+  assert.deepEqual(plain(C.lieuxAAnnuler(vue)), [
+    { canal: 'meetup', nom: 'Meetup', url: 'https://www.meetup.com/au-de12/events/42' },
+    { canal: 'vibes', nom: 'Vibes', url: '' },
+    { canal: 'discord', nom: 'Discord', url: 'https://discord.com/channels/1/2' }
+  ]);
+
+  const a = C.annulerChamps(vue, '  Martin est malade,\nreportée.  ', '12/10/2026', 'alice@au-de12paris.com');
+  assert.equal(a.titre, 'ANNULÉ - Soirée BOTC');
+  assert.ok(C.estAnnule(a.titre));
+  const d = C.construireDescription(a);
+  assert.equal(d, 'Annulé : Martin est malade, reportée.\n\n' +
+    'Un jeu de mystère.\n\nAnimé par : Martin\nTarif : formule avec alcool 18 €, sans alcool 16 €\n\n' +
+    'Inscription : aucune\n\n---interne---\n' +
+    'Annulé le 12/10/2026 par alice@au-de12paris.com : Martin est malade, reportée.\n' +
+    'À annuler à la main : Meetup ⏳ https://www.meetup.com/au-de12/events/42 · Vibes ⏳ · Discord ⏳ https://discord.com/channels/1/2\n' +
+    'Publié : Discord ✅ 03/10 https://discord.com/channels/1/2 · Vibes ⏳');
+  assert.ok(!stripInternal(d).includes('alice'));
+
+  // Relu puis réécrit (formulaire) : rien ne change
+  const relu = plain(C.lireDescription(d));
+  assert.equal(relu.annulation, 'Martin est malade, reportée.');
+  assert.equal(relu.descriptionPublique, 'Un jeu de mystère.\n\nAnimé par : Martin');
+  assert.equal(C.construireDescription(relu), d);
+});
+
+test('Annulation : raison obligatoire, détection du titre', () => {
+  assert.throws(() => C.annulerChamps({ titre: 'X' }, '   ', '12/10/2026', 'a'), /raison/);
+  assert.ok(C.estAnnule('ANNULÉ - Tables Ouvertes'));
+  assert.ok(C.estAnnule('Annulé : Tables Ouvertes'));
+  assert.ok(C.estAnnule('ANNULE Tables'));
+  assert.ok(!C.estAnnule('Annulation de la Ligue ? Non'));
+  assert.ok(!C.estAnnule('Tables Ouvertes'));
+  assert.equal(C.titreAnnule('ANNULÉ - Tables Ouvertes'), 'ANNULÉ - Tables Ouvertes');
 });
