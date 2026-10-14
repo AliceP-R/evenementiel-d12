@@ -22,10 +22,11 @@ const TITRES_PAR_CATEGORIE = {
   jds: {
     '3': /\bbotct?\b|blood\s+on\s+the\s+clock\s*tower/i,
     '5': /\btables?\s+ouvertes?\b/i,
-    '7': /d[ée]couverte/i
+    '7': /d[ée]couverte/i,
+    '9': /joueurs\s+anonymes|chess\s*bar|machicoulis|sapphics/i // organisateurs accueillis (charte § 3.3)
   },
   jdr: {
-    '2': /r[ée]servation\s+client|^\s*client\s*$|option\s+client|privatisation/i, // charte : en JDR, une prestation privée est une Réservation Client
+    '2': /r[ée]servation\s+client|^\s*client\s*$|option\s+client/i,
     '3': /cr[ée]neau\s+libre/i,
     '4': /vadrouilles?\b|\bv\s*&\s*m\b/i,
     '5': /\bini?tiation\b|\bone[\s-]?shot\b|\bos\b/i,
@@ -37,9 +38,11 @@ const TITRES_PAR_CATEGORIE = {
 // Catégories dont le titre a l'air (colorId), sauf la sienne : [] si le titre va avec la couleur ou n'évoque rien
 function categoriesDuTitre(calendrier, colorId, titre) {
   const titres = TITRES_PAR_CATEGORIE[calendrier] || {};
-  if (calendrier === 'jds' && /\bpriv/i.test(titre)) return []; // « BOTC Privé », privatisation : pas une soirée publique
   if (titres[colorId] && titres[colorId].test(titre)) return [];
-  return Object.keys(titres).filter(id => titres[id].test(titre));
+  // « BOTC Privé », « Privatisation … » : pas une soirée publique à inscription (mais peut être un Évènement externe)
+  const prive = /\bpriv/i.test(titre);
+  return Object.keys(titres).filter(id => titres[id].test(titre)
+    && !(prive && (CATEGORIES[calendrier].find(c => c.colorId === id) || {}).bouton === 'inscription'));
 }
 
 // ---------- Fonctions pures (testées avec Node) ----------

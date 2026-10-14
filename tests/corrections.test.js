@@ -107,12 +107,14 @@ test('Titre d\'une autre catégorie que sa couleur : signalé pour chaque catég
   assert.match(signale('jds', '9', 'Soirée Découverte')[0], /^Couleur « Évènement externe » mais titre de « Soirée Découverte »/);
   assert.match(signale('jdr', '', 'Créneau Libre')[0], /^Sans catégorie/);
   assert.match(signale('jds', '', 'Soirée BOTCT - Débutant')[0], /« Soirée BOTC »/);
-  assert.match(signale('jdr', '', 'Privatisation')[0], /« Réservation Client »/);
+  assert.match(signale('jds', '', 'Chessbar')[0], /« Évènement externe »/);
+  assert.match(signale('jds', '7', 'Tournoi Machicoulis')[0], /« Évènement externe »/);
+  assert.match(signale('jds', '', 'Privatisation Marie&TheSapphics')[0], /« Évènement externe »/);
   assert.match(signale('jdr', '', 'Option Client')[0], /« Réservation Client »/);
   assert.match(signale('jdr', '3', 'INTIATION - Berlin XVIII')[0], /« OS & Initiation »/);
   // Titre qui va avec sa couleur, ou qui n'évoque aucune catégorie : rien
   [['jdr', '2', 'Réservation Client'], ['jdr', '3', 'Créneau Libre'], ['jdr', '4', 'V&M'], ['jdr', '5', 'Initiation D&D'],
     ['jdr', '8', 'Campagne'], ['jds', '3', 'BOTC Privé'], ['jds', '7', 'Découverte : Le Conseil d\'Anderian'],
-    ['jds', '9', 'Tournoi Machicoulis'], ['jds', '', 'BOTC Privé'], ['jds', '', 'Privatisation LQS'], ['jdr', '9', 'Serum']]
+    ['jds', '9', 'Tournoi Machicoulis'], ['jds', '', 'BOTC Privé'], ['jds', '', 'Privatisation LQS'], ['jdr', '', 'Privatisation'], ['jds', '9', 'Joueurs Anonymes'], ['jdr', '9', 'Serum']]
     .forEach(([cal, c, t]) => assert.deepEqual(signale(cal, c, t), [], t));
 });
