@@ -16,6 +16,32 @@ const TARIFS_PAR_DEFAUT = {
   }
 };
 
+// Titres typiques de chaque catégorie, par calendrier puis colorId, pour repérer un titre qui ne va pas avec sa couleur
+// (le site ne regarde que la couleur : salle bloquée ou réservable, bouton d'inscription…)
+const TITRES_PAR_CATEGORIE = {
+  jds: {
+    '3': /\bbotct?\b|blood\s+on\s+the\s+clock\s*tower/i,
+    '5': /\btables?\s+ouvertes?\b/i,
+    '7': /d[ée]couverte/i
+  },
+  jdr: {
+    '2': /r[ée]servation\s+client|^\s*client\s*$|option\s+client|privatisation/i, // charte : en JDR, une prestation privée est une Réservation Client
+    '3': /cr[ée]neau\s+libre/i,
+    '4': /vadrouilles?\b|\bv\s*&\s*m\b/i,
+    '5': /\bini?tiation\b|\bone[\s-]?shot\b|\bos\b/i,
+    '8': /\bcampagne\b/i,
+    '11': /ligue\s+ludique/i
+  }
+};
+
+// Catégories dont le titre a l'air (colorId), sauf la sienne : [] si le titre va avec la couleur ou n'évoque rien
+function categoriesDuTitre(calendrier, colorId, titre) {
+  const titres = TITRES_PAR_CATEGORIE[calendrier] || {};
+  if (calendrier === 'jds' && /\bpriv/i.test(titre)) return []; // « BOTC Privé », privatisation : pas une soirée publique
+  if (titres[colorId] && titres[colorId].test(titre)) return [];
+  return Object.keys(titres).filter(id => titres[id].test(titre));
+}
+
 // ---------- Fonctions pures (testées avec Node) ----------
 
 // Titre seul, sans emojis ni ponctuation, pour comparer à une 1re ligne de description
@@ -35,6 +61,17 @@ function corrigerEvenement(vue) {
   const noter = (avant, apres, message) => { if (avant !== apres) changements.push(message); return apres; };
 
   if (v.colorId && !categorie) aVerifier.push(`Couleur ${v.colorId} hors catégorie : choisir une catégorie`);
+  // Titre d'une autre catégorie que sa couleur (ex. date modifiée d'une série écrasée par Google Agenda) :
+  // signalé, jamais corrigé seul (il faut savoir lequel des deux est juste, et le client pour une Réservation Client)
+  categoriesDuTitre(v.calendrier, v.colorId, v.titre).forEach(id => {
+    const autre = CATEGORIES[v.calendrier].find(c => c.colorId === id);
+    const couleur = categorie ? `Couleur « ${categorie.nom} »` : 'Sans catégorie';
+    let conseil = 'changer la couleur ou le titre';
+    if (id === '2') conseil = 'si c\'est une réservation, couleur Réservation Client et le client en interne';
+    else if (v.colorId === '2') conseil = 'si c\'est bien une réservation, titre « Réservation Client » et le client en interne';
+    if (categorie && categorie.salle === 'libre' && autre.salle === 'bloque') conseil += ' (pour l\'instant la salle s\'affiche réservable)';
+    aVerifier.push(`${couleur} mais titre de « ${autre.nom} » : ${conseil}`);
+  });
   // Ligue Ludique : écrite par la routine Claude, ni corrigée ni listée ici
   if (v.colorId === '11' && v.calendrier === 'jdr') return { vue: v, changements, aVerifier };
 
@@ -51,14 +88,6 @@ function corrigerEvenement(vue) {
     titre = noter(titre, /^\s*(réservation client|client)\s*$/i.test(titre) ? 'Réservation Client' : titre, 'Titre : « Réservation Client »');
   }
   v.titre = titre.trim();
-  // Réservation Client et Créneau Libre : le site les distingue par la couleur seule (salle bloquée ou réservable).
-  // Un titre de l'autre catégorie (ex. date modifiée d'une série écrasée par Google) n'est pas corrigé seul : il faut le client.
-  if (v.calendrier === 'jdr' && v.colorId === '2' && /cr[ée]neau\s+libre/i.test(v.titre)) {
-    aVerifier.push('Couleur Réservation Client mais titre « Créneau Libre » : remettre « Réservation Client » et le client en interne, ou la couleur Créneau Libre');
-  }
-  if (v.calendrier === 'jdr' && v.colorId === '3' && /r[ée]servation\s+client|^\s*client\s*$/i.test(v.titre)) {
-    aVerifier.push('Couleur Créneau Libre mais titre « Réservation Client » : la salle s\'affiche réservable, choisir la couleur Réservation Client');
-  }
 
   // ---- Description publique ----
   let lignes = v.descriptionPublique ? v.descriptionPublique.split('\n') : [];

@@ -88,14 +88,31 @@ test('écriture inclusive et prix, sans toucher aux liens', () => {
   assert.equal(r.vue.descriptionPublique, 'Les invité·es sont accompagné·es. 5 €.\nhttps://site.fr/les.e.s');
 });
 
-test('Réservation Client et Créneau Libre : un titre de l\'autre catégorie est signalé, jamais corrigé seul', () => {
-  const client = corriger(evenement('jdr', '2', 'Créneau Libre', '📌 Cette session est réservée par un client.\n\nTarif : consommation minimum de 90 €'));
+test('Titre d\'une autre catégorie que sa couleur : signalé pour chaque catégorie, jamais corrigé seul', () => {
+  const signale = (cal, colorId, titre) => corriger(evenement(cal, colorId, titre, 'Texte.')).aVerifier.filter(a => /mais titre de/.test(a));
+  // Réservation Client ↔ Créneau Libre (le 19 octobre)
+  const client = corriger(evenement('jdr', '2', 'Créneau Libre', '📌 Cette session est réservée par un client.'));
   assert.equal(client.vue.titre, 'Créneau Libre');
   assert.equal(client.vue.colorId, '2');
-  assert.ok(client.aVerifier.some(a => /titre « Créneau Libre »/.test(a)));
-  const libre = corriger(evenement('jdr', '3', 'Réservation client', 'Tarif : consommation minimum de 90 €'));
-  assert.equal(libre.vue.colorId, '3');
-  assert.ok(libre.aVerifier.some(a => /titre « Réservation Client »/.test(a)));
-  assert.notEqual(libre.vue.descriptionPublique, '📌 Cette session est réservée par un client.');
-  assert.deepEqual(corriger(evenement('jdr', '3', 'Créneau Libre', 'Tarif : consommation minimum de 90 €')).aVerifier, []);
+  assert.ok(client.aVerifier.some(a => /^Couleur « Réservation Client » mais titre de « Créneau Libre »/.test(a)));
+  const libre = signale('jdr', '3', 'Réservation client');
+  assert.equal(libre.length, 1);
+  assert.match(libre[0], /salle s'affiche réservable/);
+  // Les autres catégories JDR et JDS
+  assert.match(signale('jdr', '3', 'Vadrouilles & Magie')[0], /« MJ PRO - Vadrouilles & Magie »/);
+  assert.match(signale('jdr', '4', 'Initiation Cosmere')[0], /« OS & Initiation »/);
+  assert.match(signale('jdr', '5', 'Campagne')[0], /« MJ PRO - Campagne Semi-Ouverte »/);
+  assert.match(signale('jds', '5', 'Blood On The Clock Tower')[0], /« Soirée BOTC »/);
+  assert.match(signale('jds', '7', 'Tables Ouvertes du Jeudi')[0], /« Tables Ouvertes »/);
+  assert.match(signale('jds', '9', 'Soirée Découverte')[0], /^Couleur « Évènement externe » mais titre de « Soirée Découverte »/);
+  assert.match(signale('jdr', '', 'Créneau Libre')[0], /^Sans catégorie/);
+  assert.match(signale('jds', '', 'Soirée BOTCT - Débutant')[0], /« Soirée BOTC »/);
+  assert.match(signale('jdr', '', 'Privatisation')[0], /« Réservation Client »/);
+  assert.match(signale('jdr', '', 'Option Client')[0], /« Réservation Client »/);
+  assert.match(signale('jdr', '3', 'INTIATION - Berlin XVIII')[0], /« OS & Initiation »/);
+  // Titre qui va avec sa couleur, ou qui n'évoque aucune catégorie : rien
+  [['jdr', '2', 'Réservation Client'], ['jdr', '3', 'Créneau Libre'], ['jdr', '4', 'V&M'], ['jdr', '5', 'Initiation D&D'],
+    ['jdr', '8', 'Campagne'], ['jds', '3', 'BOTC Privé'], ['jds', '7', 'Découverte : Le Conseil d\'Anderian'],
+    ['jds', '9', 'Tournoi Machicoulis'], ['jds', '', 'BOTC Privé'], ['jds', '', 'Privatisation LQS'], ['jdr', '9', 'Serum']]
+    .forEach(([cal, c, t]) => assert.deepEqual(signale(cal, c, t), [], t));
 });
