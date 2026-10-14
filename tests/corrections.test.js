@@ -80,6 +80,8 @@ test('un évènement déjà au format ne reçoit aucune correction', () => {
     'Tarif : formule avec alcool 18 €, sans alcool 16 €\n\n---interne---\nContact : Martin\nNotes :\nSortir la malle'));
   assert.deepEqual(r.changements, []);
   assert.deepEqual(r.aVerifier, []);
+  // ni contrôle titre / couleur ni « Privé en JDR » sur un évènement annulé
+  assert.deepEqual(corriger(evenement('jdr', '3', 'ANNULÉ - Initiation Cosmere', 'Annulé : MJ malade', { visibilite: 'privee' })).aVerifier, []);
 });
 
 test('écriture inclusive et prix, sans toucher aux liens', () => {
