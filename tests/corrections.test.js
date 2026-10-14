@@ -127,3 +127,9 @@ test('JDR privé : signalé, la salle paraîtrait libre sur le site', () => {
   assert.equal(prive('publique').length, 0);
   assert.equal(corriger(evenement('jds', '9', 'Chessbar', '', { visibilite: 'privee' })).aVerifier.filter(a => /Privé en JDR/.test(a)).length, 0);
 });
+
+test('évènement annulé : pas de correction (titre en majuscules et « Inscription : aucune » voulus)', () => {
+  const r = corriger(evenement('jds', '9', 'ANNULÉ - Soirée jeux !', 'Annulé : salle indisponible\n\nInscription : aucune'));
+  assert.deepEqual(r.changements, []);
+  assert.deepEqual(r.aVerifier, []);
+});

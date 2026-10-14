@@ -65,12 +65,12 @@ function corrigerEvenement(vue) {
   const noter = (avant, apres, message) => { if (avant !== apres) changements.push(message); return apres; };
 
   if (v.colorId && !categorie) aVerifier.push(`Couleur ${v.colorId} hors catégorie : choisir une catégorie`);
-  // Titre d'une autre catégorie que sa couleur (ex. date modifiée d'une série écrasée par Google Agenda) :
-  // signalé, jamais corrigé seul (il faut savoir lequel des deux est juste, et le client pour une Réservation Client)
   // En JDR, un évènement privé est invisible : le site affiche la salle libre (charte § 3.5)
   if (v.calendrier === 'jdr' && v.visibilite === 'privee') {
     aVerifier.push('Privé en JDR : le site affiche la salle libre ce jour-là. Mettre en public (une réservation = Réservation Client, phrase fixe)');
   }
+  // Titre d'une autre catégorie que sa couleur (ex. date modifiée d'une série écrasée par Google Agenda) :
+  // signalé, jamais corrigé seul (il faut savoir lequel des deux est juste, et le client pour une Réservation Client)
   categoriesDuTitre(v.calendrier, v.colorId, v.titre).forEach(id => {
     const autre = CATEGORIES[v.calendrier].find(c => c.colorId === id);
     const couleur = categorie ? `Couleur « ${categorie.nom} »` : 'Sans catégorie';
@@ -82,6 +82,8 @@ function corrigerEvenement(vue) {
   });
   // Ligue Ludique : écrite par la routine Claude, ni corrigée ni listée ici
   if (v.colorId === '11' && v.calendrier === 'jdr') return { vue: v, changements, aVerifier };
+  // Annulé : on n'y touche plus (le titre « ANNULÉ - » et « Inscription : aucune » sont voulus)
+  if (estAnnule(v.titre)) return { vue: v, changements, aVerifier };
 
   // ---- Titre (charte § 2.5 et état des lieux) ----
   let titre = v.titre;

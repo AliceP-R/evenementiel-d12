@@ -92,6 +92,7 @@ function versVue_(type, ev) {
     id: ev.id,
     serieId: ev.recurringEventId || '',
     titre: ev.summary || '',
+    annule: estAnnule(ev.summary),
     colorId: ev.colorId ? String(ev.colorId) : '',
     visibilite: visibilite === 'private' || visibilite === 'confidential' ? 'privee' : 'publique',
     recurrence: lireRecurrence(ev.recurrence),
@@ -184,6 +185,25 @@ function supprimerEvenement(type, id, portee) {
   Calendar.Events.remove(cal.id, cible);
   const date = lireHoraires(ev.start, ev.end).date;
   journaliser_(email, cible === id ? 'Suppression' : 'Suppression (toute la série)', type, ev.summary || '', date, cible);
+}
+
+// Annule un évènement sans le supprimer : titre « ANNULÉ - … », raison affichée sur le site, plus de bouton
+// d'inscription. Seuls le titre et la description changent. portee = 'serie' pour annuler toute la série.
+// Renvoie les lieux où l'annuler à la main (Meetup, Vibes, Discord), avec leur lien quand il est connu.
+function annulerEvenement(type, id, portee, raison) {
+  const email = verifierAcces_();
+  const cal = calendrier_(type);
+  const ev = Calendar.Events.get(cal.id, id, { timeZone: FUSEAU });
+  const cibleId = portee === 'serie' && ev.recurringEventId ? ev.recurringEventId : id;
+  const cible = cibleId === id ? ev : Calendar.Events.get(cal.id, cibleId, { timeZone: FUSEAU });
+  const vue = versVue_(type, cible);
+  if (vue.annule) throw new Error('Cet évènement est déjà annulé.');
+
+  const annule = annulerChamps(vue, raison, Utilities.formatDate(new Date(), FUSEAU, 'dd/MM/yyyy'), email);
+  Calendar.Events.patch({ summary: annule.titre, description: construireDescription(annule) }, cal.id, cibleId);
+  journaliser_(email, cibleId === id ? 'Annulation' : 'Annulation (toute la série)', type, annule.titre,
+    lireHoraires(ev.start, ev.end).date, cibleId);
+  return { titre: annule.titre, lieux: lieuxAAnnuler(vue) };
 }
 
 function valider_(f) {

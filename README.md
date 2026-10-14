@@ -99,6 +99,20 @@ Pour que Clémence puisse s'en servir, ajouter son adresse à `EMAILS_AUTORISES`
 - **Évènement externe** (Myrtille) : nouvelle catégorie, à mettre en ligne **en même temps** dans le site public
   (branche `claude/compassionate-lamport-z7f6ms` du dépôt `calendrier-d12`).
 
+## Annuler un évènement
+
+Bouton **🚫 Annuler** d'un évènement à venir (pour une série : cette date ou toute la série). Il faut écrire la
+**raison**, affichée sur le site. L'évènement n'est pas supprimé :
+
+- son titre devient `ANNULÉ - <titre>` et sa description commence par `Annulé : <raison>` ;
+- le bouton d'inscription disparaît (`Inscription : aucune`), ainsi que les liens par canal et la ligne `Places :` ;
+- les notes internes gardent qui a annulé, quand et pourquoi, et la ligne `À annuler à la main :` ;
+- l'outil affiche ensuite **où l'annuler à la main** : Meetup, Vibes et Discord, avec le lien quand il est connu (liens
+  par canal ou liens trouvés dans les notes, par exemple la ligne `Publié :`).
+
+Pour rétablir un évènement : ✏️ Modifier, vider « Raison de l'annulation » et retirer `ANNULÉ - ` du titre.
+**📄 Dupliquer** un évènement annulé (pour le reporter) enlève l'annulation de la copie.
+
 ## Aperçu
 
 **👁️ Voir** (liste) ou **👁️ Aperçu sur le site** (formulaire, avant d'enregistrer) affiche la fenêtre de l'évènement
