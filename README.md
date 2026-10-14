@@ -4,7 +4,9 @@ Outil d'administration des évènements d'**Au Dé 12**. L'équipe crée, modifi
 JDS et JDR avec un vrai formulaire, et l'outil les écrit dans Google Agenda en respectant les conventions lues par le
 site public [calendrier.au-de12paris.com](https://calendrier.au-de12paris.com) (dépôt `alicep-r/calendrier-d12`).
 
-🔗 **Ouvrir l'outil** (comptes `@au-de12paris.com` autorisés uniquement) :
+🔗 **Ouvrir l'outil** (comptes `@au-de12paris.com` autorisés uniquement) : **https://calendrier.au-de12paris.com/admin**
+
+Cette adresse courte (page `docs/admin/index.html` du dépôt `calendrier-d12`) redirige vers l'adresse de l'application :
 https://script.google.com/a/macros/au-de12paris.com/s/AKfycbze5U_fOGKcIdlryhaDd8DuwZVP1hbws4DZSkmc9dxZT1Zs5nqLDRWBL1Qkw2yCds_yMA/exec
 
 📄 Spécifications : [docs/specs.md](docs/specs.md) · Format des descriptions (proposition) : [docs/formats-descriptions.md](docs/formats-descriptions.md)
