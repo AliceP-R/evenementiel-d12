@@ -108,6 +108,8 @@ test('Titre d\'une autre catégorie que sa couleur : signalé pour chaque catég
   assert.match(signale('jdr', '', 'Créneau Libre')[0], /^Sans catégorie/);
   assert.match(signale('jds', '', 'Soirée BOTCT - Débutant')[0], /« Soirée BOTC »/);
   assert.match(signale('jds', '', 'Chessbar')[0], /« Évènement externe »/);
+  assert.match(signale('jdr', '', 'Privatisation')[0], /« Évènement externe »/);
+  assert.match(signale('jdr', '2', 'Privatisation - Anniversaire')[0], /« Évènement externe »/);
   assert.match(signale('jds', '7', 'Tournoi Machicoulis')[0], /« Évènement externe »/);
   assert.match(signale('jds', '', 'Privatisation Marie&TheSapphics')[0], /« Évènement externe »/);
   assert.match(signale('jdr', '', 'Option Client')[0], /« Réservation Client »/);
@@ -115,6 +117,13 @@ test('Titre d\'une autre catégorie que sa couleur : signalé pour chaque catég
   // Titre qui va avec sa couleur, ou qui n'évoque aucune catégorie : rien
   [['jdr', '2', 'Réservation Client'], ['jdr', '3', 'Créneau Libre'], ['jdr', '4', 'V&M'], ['jdr', '5', 'Initiation D&D'],
     ['jdr', '8', 'Campagne'], ['jds', '3', 'BOTC Privé'], ['jds', '7', 'Découverte : Le Conseil d\'Anderian'],
-    ['jds', '9', 'Tournoi Machicoulis'], ['jds', '', 'BOTC Privé'], ['jds', '', 'Privatisation LQS'], ['jdr', '', 'Privatisation'], ['jds', '9', 'Joueurs Anonymes'], ['jdr', '9', 'Serum']]
+    ['jds', '9', 'Tournoi Machicoulis'], ['jds', '', 'BOTC Privé'], ['jds', '', 'Privatisation LQS'], ['jdr', '9', 'Privatisation'], ['jdr', '2', 'Option Client'], ['jds', '9', 'Joueurs Anonymes'], ['jdr', '9', 'Serum']]
     .forEach(([cal, c, t]) => assert.deepEqual(signale(cal, c, t), [], t));
+});
+
+test('JDR privé : signalé, la salle paraîtrait libre sur le site', () => {
+  const prive = v => corriger(evenement('jdr', '2', 'Option Client', '', { visibilite: v })).aVerifier.filter(a => /Privé en JDR/.test(a));
+  assert.equal(prive('privee').length, 1);
+  assert.equal(prive('publique').length, 0);
+  assert.equal(corriger(evenement('jds', '9', 'Chessbar', '', { visibilite: 'privee' })).aVerifier.filter(a => /Privé en JDR/.test(a)).length, 0);
 });

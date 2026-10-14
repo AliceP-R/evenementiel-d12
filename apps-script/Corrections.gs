@@ -31,6 +31,7 @@ const TITRES_PAR_CATEGORIE = {
     '4': /vadrouilles?\b|\bv\s*&\s*m\b/i,
     '5': /\bini?tiation\b|\bone[\s-]?shot\b|\bos\b/i,
     '8': /\bcampagne\b/i,
+    '9': /privatisation/i, // en JDR, la privatisation du bar est un Évènement externe ; la salle louée, une Réservation Client
     '11': /ligue\s+ludique/i
   }
 };
@@ -66,6 +67,10 @@ function corrigerEvenement(vue) {
   if (v.colorId && !categorie) aVerifier.push(`Couleur ${v.colorId} hors catégorie : choisir une catégorie`);
   // Titre d'une autre catégorie que sa couleur (ex. date modifiée d'une série écrasée par Google Agenda) :
   // signalé, jamais corrigé seul (il faut savoir lequel des deux est juste, et le client pour une Réservation Client)
+  // En JDR, un évènement privé est invisible : le site affiche la salle libre (charte § 3.5)
+  if (v.calendrier === 'jdr' && v.visibilite === 'privee') {
+    aVerifier.push('Privé en JDR : le site affiche la salle libre ce jour-là. Mettre en public (une réservation = Réservation Client, phrase fixe)');
+  }
   categoriesDuTitre(v.calendrier, v.colorId, v.titre).forEach(id => {
     const autre = CATEGORIES[v.calendrier].find(c => c.colorId === id);
     const couleur = categorie ? `Couleur « ${categorie.nom} »` : 'Sans catégorie';
